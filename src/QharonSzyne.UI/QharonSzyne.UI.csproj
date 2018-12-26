@@ -48,5 +48,11 @@
   <ItemGroup>
     <None Include="paket.references" />
   </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\QharonSzyne.Core\QharonSzyne.Core.fsproj">
+      <Project>{89a15013-db33-4f20-82ae-8f824e18f456}</Project>
+      <Name>QharonSzyne.Core</Name>
+    </ProjectReference>
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

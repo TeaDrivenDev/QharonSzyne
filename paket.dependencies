@@ -3,3 +3,11 @@ framework: net472, netstandard20
 
 nuget FSharp.Core
 nuget System.ValueTuple
+
+group Test
+    source https://api.nuget.org/v3/index.json
+    framework: net472
+
+    nuget xunit
+    nuget xunit.runner.console
+    nuget xunit.runner.visualstudio

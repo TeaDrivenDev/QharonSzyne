@@ -3,3 +3,24 @@ NUGET
   remote: https://api.nuget.org/v3/index.json
     FSharp.Core (4.5.4)
     System.ValueTuple (4.5)
+
+GROUP Test
+RESTRICTION: == net472
+NUGET
+  remote: https://api.nuget.org/v3/index.json
+    xunit (2.4.1)
+      xunit.analyzers (>= 0.10)
+      xunit.assert (2.4.1)
+      xunit.core (2.4.1)
+    xunit.abstractions (2.0.3)
+    xunit.analyzers (0.10)
+    xunit.assert (2.4.1)
+    xunit.core (2.4.1)
+      xunit.extensibility.core (2.4.1)
+      xunit.extensibility.execution (2.4.1)
+    xunit.extensibility.core (2.4.1)
+      xunit.abstractions (>= 2.0.3)
+    xunit.extensibility.execution (2.4.1)
+      xunit.extensibility.core (2.4.1)
+    xunit.runner.console (2.4.1)
+    xunit.runner.visualstudio (2.4.1)
