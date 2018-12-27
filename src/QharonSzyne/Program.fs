@@ -1,8 +1,18 @@
-﻿open System
+﻿namespace QharonSzyne
 
-[<EntryPoint>]
-let main argv =
-    printfn "Enter the gates\nQharon awaits"
+module Program =
 
-    Console.ReadKey() |> ignore
-    0 // return an integer exit code
+    open System
+
+    open QharonSzyne.UI.Views
+
+    [<STAThread>]
+    [<EntryPoint>]
+    let main argv =
+        let app = App()
+        app.Startup.Add (fun _ -> ScannerView().Show())
+        let exitCode = app.Run()
+
+        printfn "Enter the gates\nQharon awaits"
+
+        exitCode
