@@ -2,7 +2,17 @@ source https://api.nuget.org/v3/index.json
 framework: net472, netstandard20
 
 nuget FSharp.Core
+
+nuget System.Reactive
 nuget System.ValueTuple
+
+nuget FSharp.Control.Reactive
+
+nuget NAudio
+nuget SQLite.net-PCL
+nuget SqLiteNetExtensions
+nuget System.Data.SQLite.Core
+nuget TagLib.Portable
 
 group Test
     source https://api.nuget.org/v3/index.json

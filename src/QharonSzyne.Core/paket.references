@@ -1,1 +1,11 @@
 FSharp.Core
+
+System.Reactive
+
+FSharp.Control.Reactive
+
+NAudio
+SQLite.net-PCL
+SqLiteNetExtensions
+System.Data.SQLite.Core
+TagLib.Portable
