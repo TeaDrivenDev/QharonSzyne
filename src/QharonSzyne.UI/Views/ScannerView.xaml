@@ -6,11 +6,20 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         d:DesignHeight="450"
         d:DesignWidth="800"
+        Background="{StaticResource MaterialDesignPaper}"
+        FontFamily="{StaticResource MaterialDesignFont}"
+        TextElement.FontSize="13"
+        TextElement.FontWeight="Regular"
+        TextElement.Foreground="{StaticResource MaterialDesignBody}"
+        TextOptions.TextFormattingMode="Ideal"
+        TextOptions.TextRenderingMode="Auto"
         mc:Ignorable="d">
     <Grid>
-        <Button Padding="10"
+        <Button Height="35"
+                Padding="10"
                 HorizontalAlignment="Center"
                 VerticalAlignment="Center"
-                Content="Button" Click="Button_Click" />
+                Click="Button_Click"
+                Content="Button" />
     </Grid>
 </Window>

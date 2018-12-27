@@ -12,3 +12,4 @@ TagLib.Portable
 SQLite.net-PCL
 System.Data.SQLite.Core
 
+ReactiveProperty

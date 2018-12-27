@@ -13,6 +13,8 @@ nuget NewtonSoft.Json
 nuget SQLite.net-PCL
 nuget System.Data.SQLite.Core
 nuget TagLib.Portable
+nuget MaterialDesignThemes
+nuget ReactiveProperty
 
 group Test
     source https://api.nuget.org/v3/index.json
