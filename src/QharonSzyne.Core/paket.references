@@ -2,10 +2,13 @@ FSharp.Core
 
 System.Reactive
 
+NewtonSoft.Json
+
 FSharp.Control.Reactive
 
 NAudio
-SQLite.net-PCL
-SqLiteNetExtensions
-System.Data.SQLite.Core
 TagLib.Portable
+
+SQLite.net-PCL
+System.Data.SQLite.Core
+

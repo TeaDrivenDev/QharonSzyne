@@ -9,8 +9,8 @@ nuget System.ValueTuple
 nuget FSharp.Control.Reactive
 
 nuget NAudio
+nuget NewtonSoft.Json
 nuget SQLite.net-PCL
-nuget SqLiteNetExtensions
 nuget System.Data.SQLite.Core
 nuget TagLib.Portable
 

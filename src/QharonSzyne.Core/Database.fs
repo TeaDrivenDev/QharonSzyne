@@ -8,14 +8,15 @@ module Database =
 
     open SQLite.Net
     open SQLite.Net.Attributes
-    open SQLiteNetExtensions.Attributes
+
+    open Newtonsoft.Json
 
     [<CLIMutable>]
     type Metadata =
         {
-            [<SQLite.Net.Attributes.PrimaryKey>]
+            [<PrimaryKey>]
             Name : string
-            [<SQLite.Net.Attributes.NotNull>]
+            [<NotNull>]
             Value : string
         }
 
@@ -29,10 +30,8 @@ module Database =
             Artist : string
             Album : string
             Year : int
-            //[<OneToMany(CascadeOperations = CascadeOperation.All)>]
-            //Genres : Genre []
-            //[<OneToMany(CascadeOperations = CascadeOperation.All)>]
-            //Comments : Comment []
+            Genres : string
+            Comments : string
             Duration : TimeSpan
             [<NotNull>]
             FilePath : string
@@ -41,40 +40,34 @@ module Database =
             ModifiedOn : DateTime
         }
 
-    //and [<CLIMutable>] Comment =
-    //    {
-    //        [<PrimaryKey; AutoIncrement>]
-    //        CommentId : uint32
-    //        [<ForeignKey(typeof<Track>); NotNull>]
-    //        TrackId : uint32
-    //        CommentDescriptor : string
-    //        Content : string
-    //    }
+    [<CLIMutable>]
+    type Comment =
+        {
+            CommentDescriptor : string
+            Content : string
+        }
 
-    //and [<CLIMutable>] Genre =
-    //    {
-    //        [<PrimaryKey; AutoIncrement>]
-    //        GenreId : uint32
-    //        [<ForeignKey(typeof<Track>); NotNull>]
-    //        TrackId : uint32
-    //        [<NotNull>]
-    //        Name : string
-    //    }
+    let serializer = JsonSerializer.CreateDefault()
 
-    //let toDatabaseComment (comment : Model.Comment) =
-    //    {
-    //        CommentId = 0u
-    //        TrackId = 0u
-    //        CommentDescriptor = comment.CommentDescriptor
-    //        Content = comment.Content
-    //    }
+    let toDatabaseComments (comments : Model.Comment list) =
+        use textWriter = new StringWriter()
 
-    //let toDatabaseGenre genre =
-    //    {
-    //        GenreId = 0u
-    //        TrackId = 0u
-    //        Name = genre
-    //    }
+        comments
+        |> List.map (fun c ->
+            {
+                CommentDescriptor = c.CommentDescriptor
+                Content = c.Content
+            })
+        |> List.toArray
+        |> asSnd textWriter
+        |> serializer.Serialize
+
+        textWriter.ToString()
+
+    let toDatabaseGenres (genres : string list) =
+        use textWriter = new StringWriter()
+        serializer.Serialize(textWriter, List.toArray genres)
+        textWriter.ToString()
 
     let toDatabaseTrack (track : Model.Track) =
         {
@@ -83,9 +76,9 @@ module Database =
             Title = track.Title
             Artist = track.Artist
             Album = track.Album
-            Year = defaultArg track.Year 0u |> int
-            //Genres = track.Genres |> List.map toDatabaseGenre |> List.toArray
-            //Comments = track.Comments |> List.map toDatabaseComment |> List.toArray
+            Year = track.Year |> Option.defaultValue 0u |> int
+            Genres = track.Genres |> toDatabaseGenres
+            Comments = track.Comments |> toDatabaseComments
             Duration = track.Duration
             FilePath = track.FilePath
             FileSize = track.FileSize
@@ -93,13 +86,22 @@ module Database =
             ModifiedOn = track.ModifiedOn
         }
 
-    //let fromDatabaseComment comment : Model.Comment =
-    //    {
-    //        CommentDescriptor = comment.CommentDescriptor
-    //        Content = comment.Content
-    //    }
+    let fromDatabaseComments comments : Model.Comment list =
+        use textReader = new StringReader(comments)
+        use reader = new JsonTextReader(textReader)
+        serializer.Deserialize<Comment []> reader
+        |> Array.map (fun c ->
+            {
+                Model.Comment.CommentDescriptor = c.CommentDescriptor
+                Model.Comment.Content = c.Content
+            })
+        |> Array.toList
 
-    let fromDatabaseGenre genre = genre.Name
+    let fromDatabaseGenres genres =
+        use textReader = new StringReader(genres)
+        use reader = new JsonTextReader(textReader)
+        serializer.Deserialize<string []> reader
+        |> Array.toList
 
     let fromDatabaseTrack track : Model.Track =
         {
@@ -108,8 +110,8 @@ module Database =
             Artist = track.Artist
             Album = track.Album
             Year = track.Year |> uint32 |> Some
-            //Genres = track.Genres |> Seq.map fromDatabaseGenre |> Seq.toList
-            //Comments = track.Comments |> Seq.map fromDatabaseComment |> Seq.toList
+            Genres = track.Genres |> fromDatabaseGenres
+            Comments = track.Comments |> fromDatabaseComments
             Duration = track.Duration
             FilePath = track.FilePath
             FileSize = track.FileSize
@@ -142,5 +144,3 @@ module Database =
         |> ignore
 
         connection.CreateTable<Track>() |> ignore
-        //connection.CreateTable<Comment>() |> ignore
-        //connection.CreateTable<Genre>() |> ignore

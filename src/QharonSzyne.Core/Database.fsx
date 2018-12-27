@@ -7,19 +7,18 @@
 
 #r @"SQLite.Net-PCL\lib\portable-win8+net45+wp8+wpa81+MonoAndroid1+MonoTouch1\SQLite.Net.dll"
 #r @"SQLite.Net-PCL\lib\net4\SQLite.Net.Platform.Win32.dll"
-#r @"sqlite-net-pcl\lib\netstandard1.1\SQLite-net.dll"
-#r @"SqLiteNetExtensions\lib\netstandard1.1\SQLiteNetExtensions.dll"
-//#r @"Newtonsoft.Json\lib\net45\Newtonsoft.Json.dll"
+#r @"Newtonsoft.Json\lib\net45\Newtonsoft.Json.dll"
+#r @"System.Reactive\lib\net46\System.Reactive.dll"
 
 open System
 open System.IO
-open SQLiteNetExtensions.Extensions
 
 #r "System.IO"
 
 #r @"TagLib.Portable\lib\portable-net45+win+wpa81+wp8+MonoAndroid10+xamarinios10+MonoTouch10\TagLib.Portable.dll"
 #r @"NAudio\lib\net35\NAudio.dll"
 
+#load "Prelude.fs"
 #load "Model.fs"
 #load "Scanning.fs"
 #load "Database.fs"
