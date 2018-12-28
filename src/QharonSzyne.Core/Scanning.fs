@@ -16,7 +16,7 @@ module Scanning =
 
     type FileName = FileName of string
 
-    let createControlActor reportTotal outputTracks =
+    let createControlActor reportTotal reportProgress outputTracks =
         MailboxProcessor.Start(fun inbox ->
             let reset = 0, List.empty<Track>
 
@@ -33,7 +33,10 @@ module Scanning =
                             | Reset -> reset
                         | Choice2Of2 track ->
                             match track with
-                            | Content track -> total, track :: tracks
+                            | Content track ->
+                                let tracks = track :: tracks
+                                reportProgress tracks.Length
+                                total, tracks
                             | EndOfInput -> outputTracks tracks; total, tracks
                             | Reset -> reset
 
@@ -98,49 +101,59 @@ module Scanning =
         }
 
     let createReadFileActor storeTrack signalScanningComplete getExistingTrack =
-        MailboxProcessor.Start(fun inbox ->
-            let rec loop() =
-                async {
-                    let! message = inbox.Receive()
+        let actor =
+            MailboxProcessor.Start(fun inbox ->
+                let rec loop() =
+                    async {
+                        let! message = inbox.Receive()
 
-                    match message with
-                    | Content(FileName fileName) ->
-                        let fileInfo = FileInfo fileName
+                        match message with
+                        | Content(FileName fileName) ->
+                            let fileInfo = FileInfo fileName
 
-                        match getExistingTrack fileName with
-                        | Some track ->
-                            if (fileInfo.Length, fileInfo.LastWriteTimeUtc) = (track.FileSize, track.ModifiedOn)
-                            then track
-                            else { readTrack fileInfo with AddedOn = track.AddedOn }
-                        | None -> readTrack fileInfo
-                        |> storeTrack
-                    | EndOfInput -> signalScanningComplete()
-                    | Reset -> ()
+                            match getExistingTrack fileName with
+                            | Some track ->
+                                if (fileInfo.Length, fileInfo.LastWriteTimeUtc) = (track.FileSize, track.ModifiedOn)
+                                then track
+                                else { readTrack fileInfo with AddedOn = track.AddedOn }
+                            | None -> readTrack fileInfo
+                            |> storeTrack
+                        | EndOfInput -> signalScanningComplete()
+                        | Reset -> ()
 
-                    return! loop()
-                }
+                        return! loop()
+                    }
 
-            loop())
+                loop())
+
+        actor.Error.Add(fun e -> raise e)
+
+        actor
 
     let createScanFileSystemActor processFileName =
-        MailboxProcessor.Start(fun inbox ->
-            let rec scan() =
-                async {
-                    let! directory = inbox.Receive()
+        let actor =
+            MailboxProcessor.Start(fun inbox ->
+                let rec scan() =
+                    async {
+                        let! directory = inbox.Receive()
 
-                    Directory.EnumerateFiles(directory, "*.mp3", SearchOption.AllDirectories)
-                    |> Seq.iter (FileName >> Content >> processFileName)
+                        Directory.EnumerateFiles(directory, "*.mp3", SearchOption.AllDirectories)
+                        |> Seq.iter (FileName >> Content >> processFileName)
 
-                    EndOfInput |> processFileName
+                        EndOfInput |> processFileName
 
-                    return! scan()
-                }
+                        return! scan()
+                    }
 
-            scan())
+                scan())
+
+        actor.Error.Add(fun e -> raise e)
+
+        actor
 
     // TODO: Make cancelable
-    let scan getExistingTrack reportTotal outputTracks directory =
-        let control = createControlActor reportTotal outputTracks
+    let scan getExistingTrack reportTotal reportProgress outputTracks directory =
+        let control = createControlActor reportTotal reportProgress outputTracks
 
         let storeTrack track = track |> Content |> Choice2Of2 |> control.Post
         let scanningCompleted() = EndOfInput |> Choice2Of2 |> control.Post

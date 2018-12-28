@@ -19,6 +19,7 @@ let directory = @"F:\Music\Speed Metal"
 Scanning.scan
     (fun _ -> None)
     (printfn "%i tracks found")
+    ignore
     (fun tracks -> printfn "Total duration: %O" ((TimeSpan.Zero, tracks) ||> List.fold (fun acc track -> acc + track.Duration)))
     directory
 

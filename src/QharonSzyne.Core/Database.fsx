@@ -50,6 +50,7 @@ let addToDatabase (createConnection : unit -> SQLite.Net.SQLiteConnection) track
 Scanning.scan
     (fun _ -> None)
     (printfn "%i tracks found")
+    ignore
     (fun tracks ->
         printfn "Adding %i tracks to database" tracks.Length
         addToDatabase (fun _ -> Database.createConnection false applicationDataPath) tracks

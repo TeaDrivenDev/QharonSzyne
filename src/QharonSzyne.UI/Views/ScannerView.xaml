@@ -62,7 +62,7 @@
                 Padding="10"
                 HorizontalAlignment="Center"
                 VerticalAlignment="Center"
-                Command="{Binding MessageBoxCommand}"
+                Command="{Binding ScanCommand}"
                 Content="Scan" />
 
         <ProgressBar Grid.Row="2"
@@ -73,6 +73,13 @@
                      Maximum="{Binding TotalFiles.Value}"
                      Minimum="0"
                      Value="{Binding ScannedFiles.Value}" />
+
+        <TextBlock Grid.Row="2"
+                   Grid.Column="0"
+                   Grid.ColumnSpan="3"
+                   HorizontalAlignment="Center"
+                   VerticalAlignment="Center"
+                   Text="{Binding ScannedFiles.Value}" />
 
         <TextBlock Grid.Row="3"
                    Grid.Column="0"

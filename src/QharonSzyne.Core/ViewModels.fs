@@ -3,7 +3,6 @@
 open System
 open System.ComponentModel
 open System.Reactive.Disposables
-open System.Windows
 
 open FSharp.Quotations
 
@@ -28,7 +27,7 @@ module Utilities =
         (compositeDisposable : CompositeDisposable)
         onNext
         (reactiveCommand : ReactiveCommand<_>) =
-        reactiveCommand.WithSubscribe(onNext, compositeDisposable.Add)
+        reactiveCommand.WithSubscribe(Action<_> onNext, compositeDisposable.Add)
 
 open Utilities
 
@@ -57,11 +56,19 @@ type ScannerViewModel() =
     let scannedFiles = new ReactiveProperty<_>(0)
     let status = new ReactiveProperty<_>("Ready")
 
-    let messageBoxCommand =
+    let scanCommand =
         new ReactiveCommand<_>()
         |> withSubscribeAndDispose
             compositeDisposable
-            (Action<_>(fun _ -> MessageBox.Show("From ViewModel") |> ignore))
+            (fun _ ->
+                status.Value <- "Scanning"
+
+                QharonSzyne.Scanning.scan
+                    (fun _ -> None)
+                    (fun n -> totalFiles.Value <- n)
+                    (fun n -> scannedFiles.Value <- n)
+                    (fun tracks -> status.Value <- sprintf "%i tracks found" tracks.Length)
+                    sourceDirectory.Value)
 
     do
 
@@ -70,7 +77,7 @@ type ScannerViewModel() =
             totalFiles
             scannedFiles
             status
-            messageBoxCommand
+            scanCommand
         ] : IDisposable list)
         |> List.iter compositeDisposable.Add
 
@@ -81,7 +88,7 @@ type ScannerViewModel() =
 
     member __.Status = status
 
-    member __.MessageBoxCommand = messageBoxCommand
+    member __.ScanCommand = scanCommand
 
     interface IDisposable with
         member this.Dispose(): unit =
