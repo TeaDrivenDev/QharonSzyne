@@ -4,6 +4,7 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:local="clr-namespace:QharonSzyne.UI.Views"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:uiUtilities="clr-namespace:QharonSzyne.Core.UIUtilities;assembly=QharonSzyne.Core"
         xmlns:viewModels="clr-namespace:QharonSzyne.Core.ViewModels;assembly=QharonSzyne.Core"
         d:DataContext="{d:DesignInstance Type=viewModels:ScannerViewModel}"
         d:DesignHeight="450"
@@ -16,6 +17,22 @@
         TextOptions.TextFormattingMode="Ideal"
         TextOptions.TextRenderingMode="Auto"
         mc:Ignorable="d">
+    <Window.TaskbarItemInfo>
+        <TaskbarItemInfo>
+            <TaskbarItemInfo.ProgressState>
+                <MultiBinding Converter="{x:Static uiUtilities:CurrentAndTotalToProgressStateConverter.Instance}">
+                    <Binding Path="ScannedFiles.Value" />
+                    <Binding Path="TotalFiles.Value" />
+                </MultiBinding>
+            </TaskbarItemInfo.ProgressState>
+            <TaskbarItemInfo.ProgressValue>
+                <MultiBinding Converter="{x:Static uiUtilities:CurrentAndTotalToPercentageConverter.Instance}">
+                    <Binding Path="ScannedFiles.Value" />
+                    <Binding Path="TotalFiles.Value" />
+                </MultiBinding>
+            </TaskbarItemInfo.ProgressValue>
+        </TaskbarItemInfo>
+    </Window.TaskbarItemInfo>
     <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
