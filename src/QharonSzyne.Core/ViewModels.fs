@@ -54,6 +54,7 @@ type Status =
     | Ready
     | Scanning
     | Error of QharonSzyne.Core.Scanning.ScanningError
+    | Storing
     | Done of filesFound:int
 
 type ScannerViewModel() =
@@ -73,6 +74,14 @@ type ScannerViewModel() =
         |> withSubscribeAndDispose
             compositeDisposable
             (fun _ ->
+                let databasePath =
+                    System.IO.Path.Combine(
+                        QharonSzyne.Core.Infrastructure.Constants.ApplicationDataDirectory,
+                        QharonSzyne.Core.Infrastructure.Constants.LibrariesDirectoryName,
+                        "Default")
+
+                QharonSzyne.Core.Database.createTracksDatabase databasePath
+
                 statusSubject.OnNext Scanning
 
                 QharonSzyne.Core.Scanning.scan
@@ -80,7 +89,18 @@ type ScannerViewModel() =
                     (fun error -> Error error |> statusSubject.OnNext)
                     (fun n -> totalFiles.Value <- n)
                     (fun n -> scannedFiles.Value <- n)
-                    (fun tracks -> statusSubject.OnNext (Done tracks.Length))
+                    (fun tracks ->
+                        statusSubject.OnNext Storing
+
+                        use connection = QharonSzyne.Core.Database.createConnection false databasePath
+
+                        tracks
+                        |> List.map QharonSzyne.Core.Database.toDatabaseTrack
+                        |> (fun tracks -> tracks, true)
+                        |> connection.InsertAll
+                        |> ignore
+
+                        statusSubject.OnNext (Done tracks.Length))
                     sourceDirectory.Value)
 
     let timestamp message =
@@ -101,6 +121,7 @@ type ScannerViewModel() =
                 match error with
                 | QharonSzyne.Core.Scanning.CorruptFile filePath ->
                     sprintf "Corrupt file: %s" filePath
+            | Storing -> "Storing tracks to database"
             | Done filesFound -> sprintf "Done. %i files found" filesFound
             |> timestamp
             |> status.Add)
