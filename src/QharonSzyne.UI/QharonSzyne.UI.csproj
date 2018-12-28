@@ -58,6 +58,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="paket.references" />
+    <Resource Include="Resources\Gafata-Regular.ttf" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\QharonSzyne.Core\QharonSzyne.Core.fsproj">
