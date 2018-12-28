@@ -35,6 +35,8 @@ module Utilities =
 
 open Utilities
 
+open QharonSzyne.Core
+
 // see http://www.fssnip.net/4Q/title/F-Quotations-with-INotifyPropertyChanged
 type PropertyChangedBase() =
     let propertyChanged = new Event<_, _>()
@@ -53,7 +55,7 @@ type PropertyChangedBase() =
 type Status =
     | Ready
     | Scanning
-    | Error of QharonSzyne.Core.Scanning.ScanningError
+    | Error of Scanning.ScanningError
     | Storing
     | Done of filesFound:int
 
@@ -76,15 +78,15 @@ type ScannerViewModel() =
             (fun _ ->
                 let databasePath =
                     System.IO.Path.Combine(
-                        QharonSzyne.Core.Infrastructure.Constants.ApplicationDataDirectory,
-                        QharonSzyne.Core.Infrastructure.Constants.LibrariesDirectoryName,
+                        Infrastructure.Constants.ApplicationDataDirectory,
+                        Infrastructure.Constants.LibrariesDirectoryName,
                         "Default")
 
-                QharonSzyne.Core.Database.createTracksDatabase databasePath
+                Database.createTracksDatabase databasePath
 
                 statusSubject.OnNext Scanning
 
-                QharonSzyne.Core.Scanning.scan
+                Scanning.scan
                     (fun _ -> None)
                     (fun error -> Error error |> statusSubject.OnNext)
                     (fun n -> totalFiles.Value <- n)
@@ -92,10 +94,10 @@ type ScannerViewModel() =
                     (fun tracks ->
                         statusSubject.OnNext Storing
 
-                        use connection = QharonSzyne.Core.Database.createConnection false databasePath
+                        use connection = Database.createConnection false databasePath
 
                         tracks
-                        |> List.map QharonSzyne.Core.Database.toDatabaseTrack
+                        |> List.map Database.toDatabaseTrack
                         |> (fun tracks -> tracks, true)
                         |> connection.InsertAll
                         |> ignore
@@ -107,19 +109,18 @@ type ScannerViewModel() =
         sprintf "%s %s" (DateTime.Now.ToString("HH:mm:ss.fff")) message
 
     do
-        QharonSzyne.Core.Infrastructure.MainThreadScheduler <-
-            DispatcherScheduler(Application.Current.Dispatcher)
+        Infrastructure.MainThreadScheduler <- DispatcherScheduler(Application.Current.Dispatcher)
 
         statusSubject
         |> Observable.startWith [ Ready ]
-        |> Observable.observeOn QharonSzyne.Core.Infrastructure.MainThreadScheduler
+        |> Observable.observeOn Infrastructure.MainThreadScheduler
         |> Observable.subscribe (fun newStatus ->
             match newStatus with
             | Ready -> "Ready"
             | Scanning -> "Scanning"
             | Error error ->
                 match error with
-                | QharonSzyne.Core.Scanning.CorruptFile filePath ->
+                | Scanning.CorruptFile filePath ->
                     sprintf "Corrupt file: %s" filePath
             | Storing -> "Storing tracks to database"
             | Done filesFound -> sprintf "Done. %i files found" filesFound
