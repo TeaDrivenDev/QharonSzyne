@@ -1,4 +1,4 @@
-﻿namespace QharonSzyne
+﻿namespace QharonSzyne.Core
 
 module Model =
 

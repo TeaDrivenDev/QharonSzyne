@@ -1,4 +1,4 @@
-﻿namespace QharonSzyne
+﻿namespace QharonSzyne.Core
 
 [<RequireQualifiedAccess>]
 module Scanning =
@@ -178,7 +178,7 @@ module Scanning =
         let control = createControlActor reportTotal reportProgress outputTracks
 
         let storeTrack track = track |> Content |> ReadTrack |> control.Post
-        let scanningCompleted() = EndOfInput |> ReadTrack |> control.Post
+        let scanningCompleted () = EndOfInput |> ReadTrack |> control.Post
 
         let reportError error =
             reportError error

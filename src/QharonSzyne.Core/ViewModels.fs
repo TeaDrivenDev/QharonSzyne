@@ -50,6 +50,12 @@ type PropertyChangedBase() =
     member x.OnPropertyChanged(expr : Expr) =
         x.OnPropertyChanged(nameof expr)
 
+type Status =
+    | Ready
+    | Scanning
+    | Error of QharonSzyne.Core.Scanning.ScanningError
+    | Done of filesFound:int
+
 type ScannerViewModel() =
     inherit PropertyChangedBase()
 
@@ -58,35 +64,41 @@ type ScannerViewModel() =
     let sourceDirectory = new ReactiveProperty<_>("")
     let totalFiles = new ReactiveProperty<_>(0)
     let scannedFiles = new ReactiveProperty<_>(0)
-    let status = new ReactiveProperty<_>("Ready")
-    let errors = new ObservableCollection<_>()
+    let status = new ObservableCollection<_>()
 
-    let errorsSubject = new System.Reactive.Subjects.Subject<_>()
+    let statusSubject = new System.Reactive.Subjects.Subject<_>()
 
     let scanCommand =
         new ReactiveCommand<_>()
         |> withSubscribeAndDispose
             compositeDisposable
             (fun _ ->
-                status.Value <- "Scanning"
+                statusSubject.OnNext Scanning
 
-                QharonSzyne.Scanning.scan
+                QharonSzyne.Core.Scanning.scan
                     (fun _ -> None)
-                    errorsSubject.OnNext
+                    (fun error -> Error error |> statusSubject.OnNext)
                     (fun n -> totalFiles.Value <- n)
                     (fun n -> scannedFiles.Value <- n)
-                    (fun tracks -> status.Value <- sprintf "%i tracks found" tracks.Length)
+                    (fun tracks -> statusSubject.OnNext (Done tracks.Length))
                     sourceDirectory.Value)
 
     do
         QharonSzyne.Core.Infrastructure.MainThreadScheduler <- DispatcherScheduler(Application.Current.Dispatcher)
 
-        errorsSubject
+        statusSubject
+        |> Observable.startWith [ Ready ]
         |> Observable.observeOn QharonSzyne.Core.Infrastructure.MainThreadScheduler
-        |> Observable.subscribe (fun error ->
-            match error with
-            | QharonSzyne.Scanning.CorruptFile filePath ->
-                errors.Add (sprintf "Corrupt file: %s" filePath))
+        |> Observable.subscribe (fun newStatus ->
+            match newStatus with
+            | Ready -> "Ready"
+            | Scanning -> "Scanning"
+            | Error error ->
+                match error with
+                | QharonSzyne.Core.Scanning.CorruptFile filePath ->
+                    sprintf "Corrupt file: %s" filePath
+            | Done filesFound -> sprintf "Done. %i files found" filesFound
+            |> status.Add)
         |> addTo compositeDisposable
         |> ignore
 
@@ -94,7 +106,6 @@ type ScannerViewModel() =
             sourceDirectory
             totalFiles
             scannedFiles
-            status
             scanCommand
         ] : IDisposable list)
         |> List.iter compositeDisposable.Add
@@ -105,7 +116,6 @@ type ScannerViewModel() =
     member __.ScannedFiles = scannedFiles
 
     member __.Status = status
-    member __.Errors = errors
 
     member __.ScanCommand = scanCommand
 
