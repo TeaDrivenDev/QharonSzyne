@@ -83,8 +83,12 @@ type ScannerViewModel() =
                     (fun tracks -> statusSubject.OnNext (Done tracks.Length))
                     sourceDirectory.Value)
 
+    let timestamp message =
+        sprintf "%s %s" (DateTime.Now.ToString("HH:mm:ss.fff")) message
+
     do
-        QharonSzyne.Core.Infrastructure.MainThreadScheduler <- DispatcherScheduler(Application.Current.Dispatcher)
+        QharonSzyne.Core.Infrastructure.MainThreadScheduler <-
+            DispatcherScheduler(Application.Current.Dispatcher)
 
         statusSubject
         |> Observable.startWith [ Ready ]
@@ -98,6 +102,7 @@ type ScannerViewModel() =
                 | QharonSzyne.Core.Scanning.CorruptFile filePath ->
                     sprintf "Corrupt file: %s" filePath
             | Done filesFound -> sprintf "Done. %i files found" filesFound
+            |> timestamp
             |> status.Add)
         |> addTo compositeDisposable
         |> ignore
