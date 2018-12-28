@@ -1,5 +1,7 @@
 ﻿namespace QharonSzyne.Core
 
+open System.Reactive.Concurrency
+
 module Infrastructure =
 
     open System
@@ -17,3 +19,5 @@ module Infrastructure =
 
             [<Literal>]
             let LibrariesDirectoryName = "Libraries"
+
+    let mutable MainThreadScheduler = DefaultScheduler.Instance :> IScheduler

@@ -14,31 +14,43 @@ module Scanning =
     | EndOfInput
     | Reset
 
+    type ScanningError =
+    | CorruptFile of string
+
     type FileName = FileName of string
+
+    type ControlMessage =
+    | ScannedFileName of Message<FileName>
+    | ReadTrack of Message<Track>
+    | ScanningError of ScanningError
 
     let createControlActor reportTotal reportProgress outputTracks =
         MailboxProcessor.Start(fun inbox ->
-            let reset = 0, List.empty<Track>
+            let reset = 0, [], []
 
-            let rec loop (total, tracks) =
+            let rec loop (total, tracks, errors) =
                 async {
                     let! message = inbox.Receive()
 
                     let newState =
                         match message with
-                        | Choice1Of2 fileName ->
+                        | ScannedFileName fileName ->
                             match fileName with
-                            | Content(FileName _) -> total + 1, tracks
-                            | EndOfInput -> reportTotal total; total, tracks
+                            | Content(FileName _) -> total + 1, tracks, errors
+                            | EndOfInput -> reportTotal total; total, tracks, errors
                             | Reset -> reset
-                        | Choice2Of2 track ->
+                        | ReadTrack track ->
                             match track with
                             | Content track ->
                                 let tracks = track :: tracks
-                                reportProgress tracks.Length
-                                total, tracks
-                            | EndOfInput -> outputTracks tracks; total, tracks
+                                reportProgress (tracks.Length + errors.Length)
+                                total, tracks, errors
+                            | EndOfInput -> outputTracks tracks; total, tracks, errors
                             | Reset -> reset
+                        | ScanningError error ->
+                            let errors = error :: errors
+                            reportProgress (tracks.Length + errors.Length)
+                            total, tracks, errors
 
                     return! loop newState
                 }
@@ -67,40 +79,44 @@ module Scanning =
         reader.TotalTime
 
     let readTrack (fileInfo : FileInfo) =
-        use stream = new FileStream(fileInfo.FullName, FileMode.Open)
+        try
+            use stream = new FileStream(fileInfo.FullName, FileMode.Open)
 
-        let duration = getDuration fileInfo.FullName
+            let duration = getDuration fileInfo.FullName
 
-        use taglibFile =
-            TagLib.StreamFileAbstraction(fileInfo.FullName, stream, null)
-            |> TagLib.File.Create
+            use taglibFile =
+                TagLib.StreamFileAbstraction(fileInfo.FullName, stream, null)
+                |> TagLib.File.Create
 
-        let tag, comments =
-            let v2Tag = taglibFile.GetTag TagLib.TagTypes.Id3v2
-            if not <| isNull v2Tag
-            then v2Tag, v2Tag :?> TagLib.Id3v2.Tag |> getV2Comments
-            else
-                let v1Tag = taglibFile.GetTag TagLib.TagTypes.Id3v1
-                if not <| isNull v1Tag
-                then v1Tag, v1Tag :?> TagLib.Id3v1.Tag |> getV1Comments
-                else TagLib.Id3v2.Tag() :> TagLib.Tag, []
+            let tag, comments =
+                let v2Tag = taglibFile.GetTag TagLib.TagTypes.Id3v2
+                if not <| isNull v2Tag
+                then v2Tag, v2Tag :?> TagLib.Id3v2.Tag |> getV2Comments
+                else
+                    let v1Tag = taglibFile.GetTag TagLib.TagTypes.Id3v1
+                    if not <| isNull v1Tag
+                    then v1Tag, v1Tag :?> TagLib.Id3v1.Tag |> getV1Comments
+                    else TagLib.Id3v2.Tag() :> TagLib.Tag, []
 
-        {
-            Number = byte tag.Track
-            Title = string tag.Title
-            Artist = string tag.FirstPerformer
-            Album = string tag.Album
-            Genres = List.ofArray tag.Genres
-            Year = Some tag.Year
-            Comments = comments
-            Duration = duration
-            FilePath = fileInfo.FullName
-            FileSize = fileInfo.Length
-            AddedOn = DateTime.UtcNow
-            ModifiedOn = fileInfo.LastWriteTimeUtc
-        }
+            {
+                Number = byte tag.Track
+                Title = string tag.Title
+                Artist = string tag.FirstPerformer
+                Album = string tag.Album
+                Genres = List.ofArray tag.Genres
+                Year = Some tag.Year
+                Comments = comments
+                Duration = duration
+                FilePath = fileInfo.FullName
+                FileSize = fileInfo.Length
+                AddedOn = DateTime.UtcNow
+                ModifiedOn = fileInfo.LastWriteTimeUtc
+            }
+            |> Ok
+        with
+        | :? TagLib.CorruptFileException as ex-> Error (CorruptFile fileInfo.FullName)
 
-    let createReadFileActor storeTrack signalScanningComplete getExistingTrack =
+    let createReadFileActor reportError storeTrack signalScanningComplete getExistingTrack =
         let actor =
             MailboxProcessor.Start(fun inbox ->
                 let rec loop() =
@@ -112,12 +128,18 @@ module Scanning =
                             let fileInfo = FileInfo fileName
 
                             match getExistingTrack fileName with
-                            | Some track ->
-                                if (fileInfo.Length, fileInfo.LastWriteTimeUtc) = (track.FileSize, track.ModifiedOn)
-                                then track
-                                else { readTrack fileInfo with AddedOn = track.AddedOn }
+                            | Some existingTrack ->
+                                if (fileInfo.Length, fileInfo.LastWriteTimeUtc) = (existingTrack.FileSize, existingTrack.ModifiedOn)
+                                then Ok existingTrack
+                                else
+                                    readTrack fileInfo
+                                    |> function
+                                        | Ok track -> Ok { track with AddedOn = existingTrack.AddedOn }
+                                        | Error _ as error -> error
                             | None -> readTrack fileInfo
-                            |> storeTrack
+                            |> function
+                                | Ok track -> storeTrack track
+                                | Error error -> reportError error
                         | EndOfInput -> signalScanningComplete()
                         | Reset -> ()
 
@@ -152,16 +174,20 @@ module Scanning =
         actor
 
     // TODO: Make cancelable
-    let scan getExistingTrack reportTotal reportProgress outputTracks directory =
+    let scan getExistingTrack reportError reportTotal reportProgress outputTracks directory =
         let control = createControlActor reportTotal reportProgress outputTracks
 
-        let storeTrack track = track |> Content |> Choice2Of2 |> control.Post
-        let scanningCompleted() = EndOfInput |> Choice2Of2 |> control.Post
+        let storeTrack track = track |> Content |> ReadTrack |> control.Post
+        let scanningCompleted() = EndOfInput |> ReadTrack |> control.Post
 
-        let readFile = createReadFileActor storeTrack scanningCompleted getExistingTrack
+        let reportError error =
+            reportError error
+            control.Post (ScanningError error)
+
+        let readFile = createReadFileActor reportError storeTrack scanningCompleted getExistingTrack
 
         let processFileName fileName =
-            fileName |> Choice1Of2 |> control.Post
+            fileName |> ScannedFileName |> control.Post
             fileName |> readFile.Post
 
         let scanFileSystem = createScanFileSystemActor processFileName

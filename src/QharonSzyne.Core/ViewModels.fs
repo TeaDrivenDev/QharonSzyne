@@ -1,9 +1,13 @@
 ﻿namespace QharonSzyne.Core.ViewModels
 
 open System
+open System.Collections.ObjectModel
 open System.ComponentModel
+open System.Reactive.Concurrency
 open System.Reactive.Disposables
+open System.Windows
 
+open FSharp.Control.Reactive
 open FSharp.Quotations
 
 open Reactive.Bindings
@@ -55,6 +59,9 @@ type ScannerViewModel() =
     let totalFiles = new ReactiveProperty<_>(0)
     let scannedFiles = new ReactiveProperty<_>(0)
     let status = new ReactiveProperty<_>("Ready")
+    let errors = new ObservableCollection<_>()
+
+    let errorsSubject = new System.Reactive.Subjects.Subject<_>()
 
     let scanCommand =
         new ReactiveCommand<_>()
@@ -65,12 +72,23 @@ type ScannerViewModel() =
 
                 QharonSzyne.Scanning.scan
                     (fun _ -> None)
+                    errorsSubject.OnNext
                     (fun n -> totalFiles.Value <- n)
                     (fun n -> scannedFiles.Value <- n)
                     (fun tracks -> status.Value <- sprintf "%i tracks found" tracks.Length)
                     sourceDirectory.Value)
 
     do
+        QharonSzyne.Core.Infrastructure.MainThreadScheduler <- DispatcherScheduler(Application.Current.Dispatcher)
+
+        errorsSubject
+        |> Observable.observeOn QharonSzyne.Core.Infrastructure.MainThreadScheduler
+        |> Observable.subscribe (fun error ->
+            match error with
+            | QharonSzyne.Scanning.CorruptFile filePath ->
+                errors.Add (sprintf "Corrupt file: %s" filePath))
+        |> addTo compositeDisposable
+        |> ignore
 
         ([
             sourceDirectory
@@ -87,6 +105,7 @@ type ScannerViewModel() =
     member __.ScannedFiles = scannedFiles
 
     member __.Status = status
+    member __.Errors = errors
 
     member __.ScanCommand = scanCommand
 
