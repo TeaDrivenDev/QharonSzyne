@@ -1,4 +1,8 @@
-﻿using System.Windows;
+﻿using System;
+using System.Windows;
+
+using QharonSzyne.Core.ViewModels;
+using QharonSzyne.UI.Utilities;
 
 namespace QharonSzyne.UI.Views
 {
@@ -15,9 +19,29 @@ namespace QharonSzyne.UI.Views
             InitializeComponent();
         }
 
-        private void Button_Click(object sender, RoutedEventArgs e)
+        private ScannerViewModel ViewModel => (ScannerViewModel)this.DataContext;
+
+        private void SelectDirectory_Click(object sender, RoutedEventArgs e)
         {
-            MessageBox.Show("Cliquez le petit bouton");
+            using (var folderBrowserDialog = new System.Windows.Forms.FolderBrowserDialog())
+            {
+                folderBrowserDialog.ShowNewFolderButton = false;
+
+                if (!String.IsNullOrWhiteSpace(this.ViewModel.SourceDirectory.Value)
+                    && System.IO.Directory.Exists(this.ViewModel.SourceDirectory.Value))
+                {
+                    folderBrowserDialog.SelectedPath = this.ViewModel.SourceDirectory.Value;
+                }
+
+                var win = new Win32Window((new System.Windows.Interop.WindowInteropHelper(this).Handle));
+
+                var result = folderBrowserDialog.ShowDialog(win);
+
+                if (result == System.Windows.Forms.DialogResult.OK)
+                {
+                    this.ViewModel.SourceDirectory.Value = folderBrowserDialog.SelectedPath;
+                }
+            }
         }
     }
 }

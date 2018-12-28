@@ -8,6 +8,7 @@
     <Compile Include="Model.fs" />
     <Compile Include="Database.fs" />
     <Compile Include="Scanning.fs" />
+    <Compile Include="ViewModels.fs" />
     <None Include="Scanning.fsx" />
     <None Include="Database.fsx" />
     <None Include="paket.references" />

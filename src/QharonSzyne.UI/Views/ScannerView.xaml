@@ -4,6 +4,8 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:local="clr-namespace:QharonSzyne.UI.Views"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:viewModels="clr-namespace:QharonSzyne.Core.ViewModels;assembly=QharonSzyne.Core"
+        d:DataContext="{d:DesignInstance Type=viewModels:ScannerViewModel}"
         d:DesignHeight="450"
         d:DesignWidth="800"
         Background="{StaticResource MaterialDesignPaper}"
@@ -15,11 +17,68 @@
         TextOptions.TextRenderingMode="Auto"
         mc:Ignorable="d">
     <Grid>
-        <Button Height="35"
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition />
+        </Grid.RowDefinitions>
+
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition />
+            <ColumnDefinition Width="Auto" />
+        </Grid.ColumnDefinitions>
+
+        <TextBlock Grid.Row="0"
+                   Grid.Column="0"
+                   Margin="5 0"
+                   VerticalAlignment="Center"
+                   Text="Source Directory" />
+        <TextBox Grid.Row="0"
+                 Grid.Column="1"
+                 Margin="5 0"
+                 HorizontalAlignment="Stretch"
+                 VerticalAlignment="Center"
+                 Text="{Binding SourceDirectory.Value}" />
+
+        <Button Grid.Row="0"
+                Grid.Column="2"
+                Width="30"
+                Height="30"
+                Margin="5"
+                Padding="0"
+                HorizontalAlignment="Left"
+                VerticalAlignment="Top"
+                Click="SelectDirectory_Click"
+                Content="…"
+                ToolTip="Select base folder" />
+
+        <Button Grid.Row="1"
+                Grid.Column="0"
+                Grid.ColumnSpan="3"
+                Height="35"
+                Margin="5"
                 Padding="10"
                 HorizontalAlignment="Center"
                 VerticalAlignment="Center"
-                Click="Button_Click"
-                Content="Button" />
+                Command="{Binding MessageBoxCommand}"
+                Content="Scan" />
+
+        <ProgressBar Grid.Row="2"
+                     Grid.Column="0"
+                     Grid.ColumnSpan="3"
+                     Height="30"
+                     Margin="5"
+                     Maximum="{Binding TotalFiles.Value}"
+                     Minimum="0"
+                     Value="{Binding ScannedFiles.Value}" />
+
+        <TextBlock Grid.Row="3"
+                   Grid.Column="0"
+                   Grid.ColumnSpan="3"
+                   HorizontalAlignment="Center"
+                   VerticalAlignment="Center"
+                   Text="{Binding Status.Value}" />
     </Grid>
 </Window>
