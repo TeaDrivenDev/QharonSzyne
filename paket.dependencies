@@ -15,6 +15,8 @@ nuget System.Data.SQLite.Core
 nuget TagLib.Portable
 nuget MaterialDesignThemes
 nuget ReactiveProperty
+nuget LiteDB
+nuget LiteDB.FSharp
 
 group Test
     source https://api.nuget.org/v3/index.json

@@ -13,3 +13,6 @@ SQLite.net-PCL
 System.Data.SQLite.Core
 
 ReactiveProperty
+
+LiteDB
+LiteDB.FSharp

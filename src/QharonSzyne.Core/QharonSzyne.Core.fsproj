@@ -22,11 +22,11 @@
     <None Include="Database.fsx" />
     <None Include="paket.references" />
   </ItemGroup>
-  <Import Project="..\..\.paket\Paket.Restore.targets" />
   <ItemGroup>
     <SQLiteInteropFiles Remove="x64\SQLite.Interop.dll" />
   </ItemGroup>
   <ItemGroup>
     <SQLiteInteropFiles Remove="x86\SQLite.Interop.dll" />
   </ItemGroup>
+  <Import Project="..\..\.paket\Paket.Restore.targets" />
 </Project>
