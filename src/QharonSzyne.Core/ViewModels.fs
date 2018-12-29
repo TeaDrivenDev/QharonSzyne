@@ -59,7 +59,7 @@ type Status =
     | Storing
     | Done of filesFound:int
 
-type ScannerViewModel() =
+type ScannerViewModel(tracksDatabase : Database.ITracksDatabase) =
     inherit PropertyChangedBase()
 
     let compositeDisposable = new CompositeDisposable()
@@ -76,14 +76,6 @@ type ScannerViewModel() =
         |> withSubscribeAndDispose
             compositeDisposable
             (fun _ ->
-                let databasePath =
-                    System.IO.Path.Combine(
-                        Infrastructure.Constants.ApplicationDataDirectory,
-                        Infrastructure.Constants.LibrariesDirectoryName,
-                        "Default")
-
-                Database.createTracksDatabase databasePath
-
                 statusSubject.OnNext Scanning
 
                 Scanning.scan
@@ -92,15 +84,7 @@ type ScannerViewModel() =
                     (fun n -> totalFiles.Value <- n)
                     (fun n -> scannedFiles.Value <- n)
                     (fun tracks ->
-                        statusSubject.OnNext Storing
-
-                        use connection = Database.createConnection false databasePath
-
-                        tracks
-                        |> List.map Database.toDatabaseTrack
-                        |> (fun tracks -> tracks, true)
-                        |> connection.InsertAll
-                        |> ignore
+                        tracksDatabase.Create("Default", tracks)
 
                         statusSubject.OnNext (Done tracks.Length))
                     sourceDirectory.Value)

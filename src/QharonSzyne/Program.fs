@@ -12,7 +12,14 @@ module Program =
         let app = App()
         app.Startup.Add (fun _ ->
             let view = ScannerView()
-            view.DataContext <- new QharonSzyne.Core.ViewModels.ScannerViewModel()
+
+            let tracksDatabase =
+                System.IO.Path.Combine(
+                    Core.Infrastructure.Constants.ApplicationDataDirectory,
+                    Core.Infrastructure.Constants.LibrariesDirectoryName)
+                |> Core.Database.SqliteTracksDatabase
+
+            view.DataContext <- new QharonSzyne.Core.ViewModels.ScannerViewModel(tracksDatabase)
             view.Show())
 
         let exitCode = app.Run()

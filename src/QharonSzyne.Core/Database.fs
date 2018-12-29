@@ -119,19 +119,18 @@ module Database =
             ModifiedOn = track.ModifiedOn
         }
 
-    let createConnection deleteExistingDatabase applicationDataPath =
-        let databaseDirectory = Path.Combine(applicationDataPath, "database")
-        let databaseFile = Path.Combine(databaseDirectory, "tracks.db")
+    let createConnection deleteExistingDatabase libraryPath =
+        let databaseFilePath = Path.Combine(libraryPath, "tracks.db")
 
         if deleteExistingDatabase then
-            if not <| Directory.Exists databaseDirectory
-            then Directory.CreateDirectory databaseDirectory |> ignore
-            else File.Delete databaseFile
+            if not <| Directory.Exists libraryPath
+            then Directory.CreateDirectory libraryPath |> ignore
+            else File.Delete databaseFilePath
 
-        new SQLiteConnection(Platform.Win32.SQLitePlatformWin32(), databaseFile)
+        new SQLiteConnection(Platform.Win32.SQLitePlatformWin32(), databaseFilePath)
 
-    let createTracksDatabase applicationDataPath =
-        use connection = createConnection true applicationDataPath
+    let createTracksDatabase libraryPath =
+        use connection = createConnection true libraryPath
 
         connection.CreateTable<Metadata>() |> ignore
 
@@ -144,3 +143,28 @@ module Database =
         |> ignore
 
         connection.CreateTable<Track>() |> ignore
+
+    type ITracksDatabase =
+        abstract member Create : libraryName:string * tracks:Model.Track list -> unit
+
+    type SqliteTracksDatabase(applicationDataPath : string) =
+        interface ITracksDatabase with
+            member this.Create(libraryName: string, tracks: Model.Track list): unit =
+                let libraryPath = Path.Combine(applicationDataPath, libraryName)
+
+                createTracksDatabase libraryPath
+
+                let connection = createConnection false libraryPath
+
+                tracks
+                |> List.map toDatabaseTrack
+                |> (fun tracks -> tracks, true)
+                |> connection.InsertAll
+                |> ignore
+
+                let complete =
+                    connection.Table<Metadata>().Where(fun m -> m.Name = "Complete")
+                    |> Seq.head
+
+                let isDone = { complete with Value = true.ToString() }
+                connection.Update isDone |> ignore

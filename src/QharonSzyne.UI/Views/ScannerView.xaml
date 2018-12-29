@@ -6,6 +6,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:uiUtilities="clr-namespace:QharonSzyne.Core.UIUtilities;assembly=QharonSzyne.Core"
         xmlns:viewModels="clr-namespace:QharonSzyne.Core.ViewModels;assembly=QharonSzyne.Core"
+        Title="QharonSzÿne Scanner"
         d:DataContext="{d:DesignInstance Type=viewModels:ScannerViewModel}"
         d:DesignHeight="450"
         d:DesignWidth="800"
