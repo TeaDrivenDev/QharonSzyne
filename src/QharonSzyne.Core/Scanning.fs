@@ -17,7 +17,7 @@ module Scanning =
     type ScanningError =
     | CorruptFile of string
 
-    type FileName = FileName of string
+    type FileName = FileName of fileName:string * basePath:string
 
     type ControlMessage =
     | ScannedFileName of Message<FileName>
@@ -78,7 +78,7 @@ module Scanning =
 
         reader.TotalTime
 
-    let readTrack (fileInfo : FileInfo) =
+    let readTrack (fileInfo : FileInfo) relativePath =
         try
             use stream = new FileStream(fileInfo.FullName, FileMode.Open)
 
@@ -107,7 +107,7 @@ module Scanning =
                 Year = Some tag.Year
                 Comments = comments
                 Duration = duration
-                FilePath = fileInfo.FullName
+                FilePath = relativePath
                 FileSize = fileInfo.Length
                 AddedOn = DateTime.UtcNow
                 ModifiedOn = fileInfo.LastWriteTimeUtc
@@ -115,6 +115,22 @@ module Scanning =
             |> Ok
         with
         | :? TagLib.CorruptFileException as ex-> Error (CorruptFile fileInfo.FullName)
+
+    // see https://weblog.west-wind.com/posts/2010/Dec/20/Finding-a-Relative-Path-in-NET
+    let getRelativePath (basePath : string) fullPath =
+            // Require trailing backslash for path
+            let basePath =
+                if not <| basePath.EndsWith "\\"
+                then basePath + "\\"
+                else basePath
+
+            let baseUri = Uri(basePath)
+            let fullUri = Uri(fullPath)
+
+            let relativeUri = baseUri.MakeRelativeUri fullUri
+
+            // Uri's use forward slashes so convert back to backward slashes
+            Uri.UnescapeDataString(relativeUri.ToString().Replace("/", "\\"))
 
     let createReadFileActor reportError storeTrack signalScanningComplete getExistingTrack =
         let actor =
@@ -124,19 +140,22 @@ module Scanning =
                         let! message = inbox.Receive()
 
                         match message with
-                        | Content(FileName fileName) ->
-                            let fileInfo = FileInfo fileName
+                        | Content(FileName (filePath, basePath)) ->
+                            let fileInfo = FileInfo filePath
 
-                            match getExistingTrack fileName with
+                            let relativePath =
+                                filePath
+                                |> getRelativePath basePath
+
+                            match getExistingTrack relativePath with
                             | Some existingTrack ->
                                 if (fileInfo.Length, fileInfo.LastWriteTimeUtc) = (existingTrack.FileSize, existingTrack.ModifiedOn)
                                 then Ok existingTrack
                                 else
-                                    readTrack fileInfo
-                                    |> function
-                                        | Ok track -> Ok { track with AddedOn = existingTrack.AddedOn }
-                                        | Error _ as error -> error
-                            | None -> readTrack fileInfo
+                                    match readTrack fileInfo relativePath with
+                                    | Ok track -> Ok { track with AddedOn = existingTrack.AddedOn }
+                                    | Error _ as error -> error
+                            | None -> readTrack fileInfo relativePath
                             |> function
                                 | Ok track -> storeTrack track
                                 | Error error -> reportError error
@@ -160,7 +179,7 @@ module Scanning =
                         let! directory = inbox.Receive()
 
                         Directory.EnumerateFiles(directory, "*.mp3", SearchOption.AllDirectories)
-                        |> Seq.iter (FileName >> Content >> processFileName)
+                        |> Seq.iter (asFst directory >> FileName >> Content >> processFileName)
 
                         EndOfInput |> processFileName
 
