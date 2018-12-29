@@ -84,6 +84,8 @@ type ScannerViewModel(tracksDatabase : Database.ITracksDatabase) =
                     (fun n -> totalFiles.Value <- n)
                     (fun n -> scannedFiles.Value <- n)
                     (fun tracks ->
+                        statusSubject.OnNext Storing
+
                         tracksDatabase.Create("Default", tracks)
 
                         statusSubject.OnNext (Done tracks.Length))

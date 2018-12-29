@@ -119,52 +119,88 @@ module Database =
             ModifiedOn = track.ModifiedOn
         }
 
-    let createConnection deleteExistingDatabase libraryPath =
-        let databaseFilePath = Path.Combine(libraryPath, "tracks.db")
+    [<Literal>]
+    let TracksDatabaseFileName = "tracks.db"
 
-        if deleteExistingDatabase then
-            if not <| Directory.Exists libraryPath
-            then Directory.CreateDirectory libraryPath |> ignore
-            else File.Delete databaseFilePath
+    [<Literal>]
+    let TracksTempDatabaseFileName = "tracks_temp.db"
 
-        new SQLiteConnection(Platform.Win32.SQLitePlatformWin32(), databaseFilePath)
+    type ConnectionMode = OpenExisting | ReplaceOrCreateIfMissing
+
+    let createConnection connectionMode databaseFilePath =
+        let exists = File.Exists databaseFilePath
+
+        match connectionMode with
+        | OpenExisting -> exists
+        | ReplaceOrCreateIfMissing ->
+            if exists
+            then File.Delete databaseFilePath
+            else Directory.CreateDirectory(Path.GetDirectoryName databaseFilePath) |> ignore
+
+            true
+        |> function
+            | true ->
+                new SQLiteConnection(Platform.Win32.SQLitePlatformWin32(), databaseFilePath)
+                |> Some
+            | false -> None
 
     let createTracksDatabase libraryPath =
-        use connection = createConnection true libraryPath
+        createConnection
+            ReplaceOrCreateIfMissing
+            (Path.Combine(libraryPath, TracksTempDatabaseFileName))
+        |> function
+            | Some connection ->
+                connection.CreateTable<Metadata>() |> ignore
 
-        connection.CreateTable<Metadata>() |> ignore
+                [
+                    { Name = "Version"; Value = "1.0" }
+                    { Name = "CreatedOn"; Value = DateTime.UtcNow.ToString "s" }
+                    { Name = "Complete"; Value = false.ToString() }
+                ]
+                |> connection.InsertAll
+                |> ignore
 
-        [
-            { Name = "Version"; Value = "1.0" }
-            { Name = "CreatedOn"; Value = DateTime.UtcNow.ToString "s" }
-            { Name = "Complete"; Value = false.ToString() }
-        ]
-        |> connection.InsertAll
-        |> ignore
+                connection.CreateTable<Track>() |> ignore
 
-        connection.CreateTable<Track>() |> ignore
+                connection
+            | None -> failwith "Could not create tracks database"
 
     type ITracksDatabase =
         abstract member Create : libraryName:string * tracks:Model.Track list -> unit
 
+        abstract member Read : libraryName:string -> Model.Track list option
+
     type SqliteTracksDatabase(applicationDataPath : string) =
         interface ITracksDatabase with
-            member this.Create(libraryName: string, tracks: Model.Track list): unit =
+            member __.Create(libraryName : string, tracks : Model.Track list): unit =
                 let libraryPath = Path.Combine(applicationDataPath, libraryName)
 
-                createTracksDatabase libraryPath
+                let newTracksDatabasePath =
+                    use connection = createTracksDatabase libraryPath
 
-                let connection = createConnection false libraryPath
+                    tracks
+                    |> List.map toDatabaseTrack
+                    |> (fun tracks -> tracks, true)
+                    |> connection.InsertAll
+                    |> ignore
 
-                tracks
-                |> List.map toDatabaseTrack
-                |> (fun tracks -> tracks, true)
-                |> connection.InsertAll
-                |> ignore
+                    let complete =
+                        connection.Table<Metadata>().Where(fun m -> m.Name = "Complete")
+                        |> Seq.head
 
-                let complete =
-                    connection.Table<Metadata>().Where(fun m -> m.Name = "Complete")
-                    |> Seq.head
+                    let isDone = { complete with Value = true.ToString() }
+                    connection.Update isDone |> ignore
 
-                let isDone = { complete with Value = true.ToString() }
-                connection.Update isDone |> ignore
+                    connection.DatabasePath
+
+                let tracksDatabasePath = Path.Combine(libraryPath, TracksDatabaseFileName)
+
+                if File.Exists tracksDatabasePath
+                then File.Delete tracksDatabasePath
+
+                File.Move(newTracksDatabasePath, tracksDatabasePath)
+
+            member __.Read(libraryName : string) =
+                let libraryPath = Path.Combine(applicationDataPath, libraryName)
+
+                failwith ""
