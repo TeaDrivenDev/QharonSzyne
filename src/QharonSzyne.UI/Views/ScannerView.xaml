@@ -42,73 +42,89 @@
             <RowDefinition />
         </Grid.RowDefinitions>
 
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="Auto" />
-            <ColumnDefinition />
-            <ColumnDefinition Width="Auto" />
-        </Grid.ColumnDefinitions>
+        <Grid Grid.Row="0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
 
-        <TextBlock Grid.Row="0"
-                   Grid.Column="0"
-                   Margin="5 0"
-                   VerticalAlignment="Center"
-                   Text="Source Directory" />
-        <TextBox Grid.Row="0"
-                 Grid.Column="1"
-                 Margin="5 0"
-                 HorizontalAlignment="Stretch"
-                 VerticalAlignment="Center"
-                 Text="{Binding SourceDirectory.Value}" />
+            <TextBlock Grid.Row="0"
+                       Grid.Column="0"
+                       Margin="5 0"
+                       VerticalAlignment="Center"
+                       Text="Source Directory" />
+            <TextBox Grid.Row="0"
+                     Grid.Column="1"
+                     Margin="5 0"
+                     HorizontalAlignment="Stretch"
+                     VerticalAlignment="Center"
+                     Text="{Binding SourceDirectory.Value}" />
 
-        <Button Grid.Row="0"
-                Grid.Column="2"
-                Width="30"
-                Height="30"
-                Margin="5"
-                Padding="0"
-                HorizontalAlignment="Left"
-                VerticalAlignment="Top"
-                Click="SelectDirectory_Click"
-                Content="…"
-                ToolTip="Select base folder" />
+            <Button Grid.Row="0"
+                    Grid.Column="2"
+                    Width="30"
+                    Height="30"
+                    Margin="5"
+                    Padding="0"
+                    HorizontalAlignment="Left"
+                    VerticalAlignment="Top"
+                    Click="SelectDirectory_Click"
+                    Content="…"
+                    ToolTip="Select base folder" />
+        </Grid>
 
-        <StackPanel Grid.Row="1"
-                    Grid.Column="0"
-                    Grid.ColumnSpan="3"
-                    HorizontalAlignment="Center"
-                    Orientation="Horizontal">
-            <Button Height="35"
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto " />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <Button Grid.Column="1"
+                    Height="35"
                     Margin="5"
                     Padding="10"
                     VerticalAlignment="Center"
                     Command="{Binding ScanCommand}"
                     Content="Scan" />
-            <CheckBox Margin="5 0"
+            <CheckBox Grid.Column="2"
+                      Margin="5 0"
                       Content="Update existing database"
                       IsChecked="{Binding UpdateExistingDatabase.Value}" />
-        </StackPanel>
+        </Grid>
 
-        <ProgressBar Grid.Row="2"
-                     Grid.Column="0"
-                     Grid.ColumnSpan="3"
-                     Height="30"
-                     Margin="5"
-                     Maximum="{Binding TotalFiles.Value}"
-                     Minimum="0"
-                     Value="{Binding ScannedFiles.Value,
-                                     Mode=OneWay}" />
+        <Grid Grid.Row="2">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="100" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
 
-        <TextBlock Grid.Row="2"
-                   Grid.Column="0"
-                   Grid.ColumnSpan="3"
-                   HorizontalAlignment="Center"
-                   VerticalAlignment="Center"
-                   Text="{Binding ScannedFiles.Value}" />
+            <ProgressBar Grid.Column="0"
+                         Grid.ColumnSpan="3"
+                         Height="30"
+                         Margin="5"
+                         Maximum="{Binding TotalFiles.Value}"
+                         Minimum="0"
+                         Value="{Binding ScannedFiles.Value,
+                                         Mode=OneWay}" />
+
+            <TextBlock Grid.Column="1"
+                       HorizontalAlignment="Center"
+                       VerticalAlignment="Center"
+                       Text="{Binding ScannedFiles.Value}" />
+
+            <TextBlock Grid.Column="2"
+                       Margin="75 0 0 0"
+                       VerticalAlignment="Center"
+                       Text="{Binding TimeRemaining.Value,
+                                      StringFormat=Remaining Time: {0:hh\\:mm\\:ss}}" />
+        </Grid>
 
         <ListBox Grid.Row="3"
-                 Grid.Column="0"
-                 Grid.ColumnSpan="3"
                  Margin="5"
+                 FontFamily="Consolas"
                  ItemsSource="{Binding Status}" />
     </Grid>
 </Window>

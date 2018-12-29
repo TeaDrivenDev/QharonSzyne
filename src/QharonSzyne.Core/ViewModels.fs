@@ -73,6 +73,7 @@ type ScannerViewModel(tracksDatabase : Database.ITracksDatabase) =
     let totalFiles = new ReactiveProperty<_>(0)
     let mutable scannedFiles = Unchecked.defaultof<ReadOnlyReactiveProperty<_>>
     let status = new ObservableCollection<_>()
+    let mutable timeRemaining = Unchecked.defaultof<ReadOnlyReactiveProperty<_>>
 
     let updateExistingDatabase = new ReactiveProperty<_>(true)
 
@@ -80,11 +81,15 @@ type ScannerViewModel(tracksDatabase : Database.ITracksDatabase) =
 
     let scannedFilesSubject = new System.Reactive.Subjects.Subject<_>()
 
+    let mutable scanStartTime = DateTime.Now
+
     let scanCommand =
         new ReactiveCommand<_>()
         |> withSubscribeAndDispose
             compositeDisposable
             (fun _ ->
+                scanStartTime <- DateTime.Now
+
                 let getExistingTrack =
                     if updateExistingDatabase.Value
                     then
@@ -149,6 +154,18 @@ type ScannerViewModel(tracksDatabase : Database.ITracksDatabase) =
             |> toReadOnlyReactiveProperty
             |> addTo compositeDisposable
 
+        timeRemaining <-
+            scannedFiles
+            |> Observable.map (fun scanned ->
+                let elapsed  = (DateTime.Now - scanStartTime).TotalMilliseconds
+
+                let perScanned = if scanned > 0 then elapsed / float scanned else 0.
+
+                float (totalFiles.Value - scanned) * perScanned
+                |> TimeSpan.FromMilliseconds)
+            |> toReadOnlyReactiveProperty
+            |> addTo compositeDisposable
+
         ([
             sourceDirectory
             totalFiles
@@ -169,6 +186,8 @@ type ScannerViewModel(tracksDatabase : Database.ITracksDatabase) =
     member __.ScanCommand = scanCommand
 
     member __.UpdateExistingDatabase = updateExistingDatabase
+
+    member __.TimeRemaining = timeRemaining
 
     interface IDisposable with
         member this.Dispose(): unit =
