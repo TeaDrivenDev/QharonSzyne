@@ -3,6 +3,7 @@
 open System
 open System.Collections.ObjectModel
 open System.ComponentModel
+open System.Linq
 open System.Reactive.Concurrency
 open System.Reactive.Disposables
 open System.Windows
@@ -54,6 +55,7 @@ type PropertyChangedBase() =
 
 type Status =
     | Ready
+    | Read of tracksInDatabase:int
     | Scanning
     | Error of Scanning.ScanningError
     | Storing
@@ -76,10 +78,24 @@ type ScannerViewModel(tracksDatabase : Database.ITracksDatabase) =
         |> withSubscribeAndDispose
             compositeDisposable
             (fun _ ->
+                let getExistingTrack =
+                    tracksDatabase.Read("Default")
+                    |> Option.map (fun tracks ->
+                        tracks.Length |> Read |> statusSubject.OnNext
+
+                        let tracksDictionary =
+                            tracks.ToDictionary(fun track -> track.FilePath)
+
+                        tracksDictionary.TryGetValue
+                        >> function
+                            | true, track -> Some track
+                            | false, _ -> None)
+                    |> Option.defaultValue (fun _ -> None)
+
                 statusSubject.OnNext Scanning
 
                 Scanning.scan
-                    (fun _ -> None)
+                    getExistingTrack
                     (fun error -> Error error |> statusSubject.OnNext)
                     (fun n -> totalFiles.Value <- n)
                     (fun n -> scannedFiles.Value <- n)
@@ -103,6 +119,8 @@ type ScannerViewModel(tracksDatabase : Database.ITracksDatabase) =
         |> Observable.subscribe (fun newStatus ->
             match newStatus with
             | Ready -> "Ready"
+            | Read tracksInDatabase ->
+                sprintf "Read %i tracks from existing database" tracksInDatabase
             | Scanning -> "Scanning"
             | Error error ->
                 match error with

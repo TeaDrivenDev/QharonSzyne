@@ -201,6 +201,13 @@ module Database =
                 File.Move(newTracksDatabasePath, tracksDatabasePath)
 
             member __.Read(libraryName : string) =
-                let libraryPath = Path.Combine(applicationDataPath, libraryName)
+                let databasePath =
+                    Path.Combine(applicationDataPath, libraryName, TracksDatabaseFileName)
 
-                failwith ""
+                createConnection OpenExisting databasePath
+                |> Option.map (fun connection ->
+                    use connection = connection
+
+                    connection.Table<Track>()
+                    |> Seq.map fromDatabaseTrack
+                    |> Seq.toList)
