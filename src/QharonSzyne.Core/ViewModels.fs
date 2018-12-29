@@ -74,6 +74,8 @@ type ScannerViewModel(tracksDatabase : Database.ITracksDatabase) =
     let mutable scannedFiles = Unchecked.defaultof<ReadOnlyReactiveProperty<_>>
     let status = new ObservableCollection<_>()
 
+    let updateExistingDatabase = new ReactiveProperty<_>(true)
+
     let statusSubject = new System.Reactive.Subjects.Subject<_>()
 
     let scannedFilesSubject = new System.Reactive.Subjects.Subject<_>()
@@ -84,18 +86,21 @@ type ScannerViewModel(tracksDatabase : Database.ITracksDatabase) =
             compositeDisposable
             (fun _ ->
                 let getExistingTrack =
-                    tracksDatabase.Read("Default")
-                    |> Option.map (fun tracks ->
-                        tracks.Length |> Read |> statusSubject.OnNext
+                    if updateExistingDatabase.Value
+                    then
+                        tracksDatabase.Read("Default")
+                        |> Option.map (fun tracks ->
+                            tracks.Length |> Read |> statusSubject.OnNext
 
-                        let tracksDictionary =
-                            tracks.ToDictionary(fun track -> track.FilePath)
+                            let tracksDictionary =
+                                tracks.ToDictionary(fun track -> track.FilePath)
 
-                        tracksDictionary.TryGetValue
-                        >> function
-                            | true, track -> Some track
-                            | false, _ -> None)
-                    |> Option.defaultValue (fun _ -> None)
+                            tracksDictionary.TryGetValue
+                            >> function
+                                | true, track -> Some track
+                                | false, _ -> None)
+                        |> Option.defaultValue (fun _ -> None)
+                    else (fun _ -> None)
 
                 statusSubject.OnNext Scanning
 
@@ -147,8 +152,10 @@ type ScannerViewModel(tracksDatabase : Database.ITracksDatabase) =
         ([
             sourceDirectory
             totalFiles
-            scannedFiles
             scanCommand
+            updateExistingDatabase
+            statusSubject
+            scannedFilesSubject
         ] : IDisposable list)
         |> List.iter compositeDisposable.Add
 
@@ -160,6 +167,8 @@ type ScannerViewModel(tracksDatabase : Database.ITracksDatabase) =
     member __.Status = status
 
     member __.ScanCommand = scanCommand
+
+    member __.UpdateExistingDatabase = updateExistingDatabase
 
     interface IDisposable with
         member this.Dispose(): unit =
