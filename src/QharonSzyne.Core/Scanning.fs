@@ -73,30 +73,44 @@ module Scanning =
             | comment -> yield { CommentDescriptor = "ID3V1"; Content = comment }
         ]
 
-    let getDuration (fileName : string) =
-        use reader = new NAudio.Wave.MediaFoundationReader(fileName)
+    let getDuration useFallbackMethod (fileName : string) =
+        // Some MP3 files have errors that, while perfectly playable, cause MediaFoundationReader to
+        // report a very incorrect track duration (often off by tens of minutes). It is unclear what
+        // exactly constitutes those errors, but what the affected files appear to have in common is
+        // also reporting a (wrong) 32kbps bitrate. We use that as an indicator to fall back to
+        // determining the length via AudioFileReader, which is much slower, but will return the
+        // correct duration.
+        // While not all files reporting a 32kbps bitrate actually require this, they are rare
+        // enough not to cause this to impact overall scanning time in any noticeable way.
+        use reader =
+            if useFallbackMethod
+            then new NAudio.Wave.AudioFileReader(fileName) :> NAudio.Wave.WaveStream
+            else new NAudio.Wave.MediaFoundationReader(fileName) :> NAudio.Wave.WaveStream
 
         reader.TotalTime
 
     let readTrack (fileInfo : FileInfo) relativePath =
         try
-            use stream = new FileStream(fileInfo.FullName, FileMode.Open)
 
-            let duration = getDuration fileInfo.FullName
+            let tag, comments, bitrate =
+                use stream = new FileStream(fileInfo.FullName, FileMode.Open)
+                use taglibFile =
+                    TagLib.StreamFileAbstraction(fileInfo.FullName, stream, null)
+                    |> TagLib.File.Create
 
-            use taglibFile =
-                TagLib.StreamFileAbstraction(fileInfo.FullName, stream, null)
-                |> TagLib.File.Create
+                let tag, comments =
+                    let v2Tag = taglibFile.GetTag TagLib.TagTypes.Id3v2
+                    if not <| isNull v2Tag
+                    then v2Tag, v2Tag :?> TagLib.Id3v2.Tag |> getV2Comments
+                    else
+                        let v1Tag = taglibFile.GetTag TagLib.TagTypes.Id3v1
+                        if not <| isNull v1Tag
+                        then v1Tag, v1Tag :?> TagLib.Id3v1.Tag |> getV1Comments
+                        else TagLib.Id3v2.Tag() :> TagLib.Tag, []
 
-            let tag, comments =
-                let v2Tag = taglibFile.GetTag TagLib.TagTypes.Id3v2
-                if not <| isNull v2Tag
-                then v2Tag, v2Tag :?> TagLib.Id3v2.Tag |> getV2Comments
-                else
-                    let v1Tag = taglibFile.GetTag TagLib.TagTypes.Id3v1
-                    if not <| isNull v1Tag
-                    then v1Tag, v1Tag :?> TagLib.Id3v1.Tag |> getV1Comments
-                    else TagLib.Id3v2.Tag() :> TagLib.Tag, []
+                tag, comments, taglibFile.Properties.AudioBitrate
+
+            let duration = getDuration (bitrate = 32) fileInfo.FullName
 
             {
                 Number = byte tag.Track

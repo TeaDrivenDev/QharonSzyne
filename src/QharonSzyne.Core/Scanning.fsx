@@ -29,43 +29,59 @@ let track =
     FileInfo hellPatrol
     |> Scanning.readTrack
 
-let getTag (path : string) =
-    let file =
-        let stream = new FileStream(path, FileMode.Open)
+let getTagLibFile (path : string) =
+    use stream = new FileStream(path, FileMode.Open)
 
-        (path, stream, null)
-        |> TagLib.StreamFileAbstraction
-        |> TagLib.File.Create
+    (path, stream, null)
+    |> TagLib.StreamFileAbstraction
+    |> TagLib.File.Create
+
+let getTag (path : string) =
+    use file = getTagLibFile path
 
     file.GetTag TagLib.TagTypes.Id3v2 :?> TagLib.Id3v2.Tag
 
-let tag = getTag hellPatrol
+//let tag = getTag hellPatrol
 
-let comments = tag.OfType<TagLib.Id3v2.CommentsFrame>()
+//let comments = tag.OfType<TagLib.Id3v2.CommentsFrame>()
 
 let getDurationMp3 (fileName : string) =
-    use reader = new NAudio.Wave.Mp3FileReader(fileName)
+    let duration =
+        use reader = new NAudio.Wave.Mp3FileReader(fileName)
+        reader.TotalTime
 
-    reader.TotalTime
+    use file = getTagLibFile fileName
+
+    file.Properties.AudioBitrate, duration.ToString()
 
 let getDurationAudio (fileName : string) =
-    use reader = new NAudio.Wave.AudioFileReader(fileName)
+    let duration =
+        use reader = new NAudio.Wave.AudioFileReader(fileName)
+        reader.TotalTime
 
-    reader.TotalTime
+    use file = getTagLibFile fileName
+
+    file.Properties.AudioBitrate, duration.ToString()
 
 let getDurationMediaFoundation (fileName : string) =
-    use reader = new NAudio.Wave.MediaFoundationReader(fileName)
+    let duration =
+        use reader = new NAudio.Wave.MediaFoundationReader(fileName)
+        reader.TotalTime
 
-    reader.TotalTime
+    use file = getTagLibFile fileName
+
+    file.Properties.AudioBitrate, duration.ToString()
 
 #time "on"
-getDurationMediaFoundation @"D:\Development\Staging\AntiQozmiq\dontwait_mediafoundation.mp3"
+getDurationMediaFoundation @"D:\Development\Staging\QharonSzyne\Testdata\Power Metal\Brainstorm\[2001] Metus Mortis\14 - Don't Wait For Me.mp3"
 #time "off"
 
 #time "on"
-getDurationAudio @"D:\Development\Staging\AntiQozmiq\dontwait_audio.mp3"
+getDurationAudio @"D:\Development\Staging\QharonSzyne\Testdata\Power Metal\Brainstorm\[2001] Metus Mortis\14 - Don't Wait For Me.mp3"
 #time "off"
 
 #time "on"
-getDurationMp3 @"D:\Development\Staging\AntiQozmiq\dontwait_mp3.mp3"
+getDurationMp3 @"D:\Development\Staging\QharonSzyne\Testdata\Power Metal\Brainstorm\[2001] Metus Mortis\14 - Don't Wait For Me.mp3"
 #time "off"
+
+let x = Unchecked.defaultof<TagLib.File>
