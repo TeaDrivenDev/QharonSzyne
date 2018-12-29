@@ -90,7 +90,8 @@
                      Margin="5"
                      Maximum="{Binding TotalFiles.Value}"
                      Minimum="0"
-                     Value="{Binding ScannedFiles.Value}" />
+                     Value="{Binding ScannedFiles.Value,
+                                     Mode=OneWay}" />
 
         <TextBlock Grid.Row="2"
                    Grid.Column="0"

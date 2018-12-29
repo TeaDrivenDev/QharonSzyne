@@ -34,6 +34,9 @@ module Utilities =
         (reactiveCommand : ReactiveCommand<_>) =
         reactiveCommand.WithSubscribe(Action<_> onNext, compositeDisposable.Add)
 
+    let toReadOnlyReactiveProperty (observable : IObservable<_>) =
+        observable.ToReadOnlyReactiveProperty()
+
 open Utilities
 
 open QharonSzyne.Core
@@ -68,10 +71,12 @@ type ScannerViewModel(tracksDatabase : Database.ITracksDatabase) =
 
     let sourceDirectory = new ReactiveProperty<_>("")
     let totalFiles = new ReactiveProperty<_>(0)
-    let scannedFiles = new ReactiveProperty<_>(0)
+    let mutable scannedFiles = Unchecked.defaultof<ReadOnlyReactiveProperty<_>>
     let status = new ObservableCollection<_>()
 
     let statusSubject = new System.Reactive.Subjects.Subject<_>()
+
+    let scannedFilesSubject = new System.Reactive.Subjects.Subject<_>()
 
     let scanCommand =
         new ReactiveCommand<_>()
@@ -98,7 +103,7 @@ type ScannerViewModel(tracksDatabase : Database.ITracksDatabase) =
                     getExistingTrack
                     (fun error -> Error error |> statusSubject.OnNext)
                     (fun n -> totalFiles.Value <- n)
-                    (fun n -> scannedFiles.Value <- n)
+                    (fun n -> scannedFilesSubject.OnNext n)
                     (fun tracks ->
                         statusSubject.OnNext Storing
 
@@ -132,6 +137,12 @@ type ScannerViewModel(tracksDatabase : Database.ITracksDatabase) =
             |> status.Add)
         |> addTo compositeDisposable
         |> ignore
+
+        scannedFiles <-
+            scannedFilesSubject
+            |> Observable.sample (TimeSpan.FromMilliseconds 100.)
+            |> toReadOnlyReactiveProperty
+            |> addTo compositeDisposable
 
         ([
             sourceDirectory
