@@ -74,7 +74,17 @@ module Scanning =
             | comment -> yield { CommentDescriptor = "ID3V1"; Content = comment }
         ]
 
-    let getDuration useFallbackMethod (fileName : string) =
+    let getDuration useFallbackMethod (filePath : string) =
+        let getDurationAudioFile (filePath : string) =
+            use reader = new NAudio.Wave.AudioFileReader(filePath)
+
+            reader.TotalTime
+
+        let getDurationMediaFoundation (filePath : string) =
+            use reader = new NAudio.Wave.MediaFoundationReader(filePath)
+
+            reader.TotalTime
+
         // Some MP3 files have errors that, while perfectly playable, cause MediaFoundationReader to
         // report a very incorrect track duration (often off by tens of minutes). It is unclear what
         // exactly constitutes those errors, but what the affected files appear to have in common is
@@ -83,16 +93,20 @@ module Scanning =
         // correct duration.
         // While not all files reporting a 32kbps bitrate actually require this, they are rare
         // enough not to cause this to impact overall scanning time in any noticeable way.
-        use reader =
-            if useFallbackMethod
-            then new NAudio.Wave.AudioFileReader(fileName) :> NAudio.Wave.WaveStream
-            else new NAudio.Wave.MediaFoundationReader(fileName) :> NAudio.Wave.WaveStream
-
-        reader.TotalTime
+        if useFallbackMethod
+        then
+            try
+                getDurationAudioFile filePath
+            with
+            | _ ->
+                // AudioFileReader in turn is less resilient regarding other errors, so if it fails
+                // to process a file, we fall back from the fallback.
+                getDurationMediaFoundation filePath
+        else
+            getDurationMediaFoundation filePath
 
     let readTrack (fileInfo : FileInfo) relativePath =
         try
-
             let tag, comments, bitrate =
                 use stream = new FileStream(fileInfo.FullName, FileMode.Open)
                 use taglibFile =
@@ -129,7 +143,7 @@ module Scanning =
             }
             |> Ok
         with
-        | :? TagLib.CorruptFileException as ex-> Error (CorruptFile fileInfo.FullName)
+        | :? TagLib.CorruptFileException as ex -> Error (CorruptFile fileInfo.FullName)
 
     // see https://weblog.west-wind.com/posts/2010/Dec/20/Finding-a-Relative-Path-in-NET
     let getRelativePath (basePath : string) fullPath =
@@ -208,6 +222,7 @@ module Scanning =
         actor
 
     // TODO: Make cancelable
+    // TODO: Report recoverable errors
     let scan getExistingTrack reportError reportTotal reportProgress outputTracks directory =
         let control = createControlActor reportTotal reportProgress outputTracks
 
