@@ -12,7 +12,7 @@
             </ResourceDictionary.MergedDictionaries>
 
             <FontFamily x:Key="UIFont">
-                pack://application:,,,./Resources/#Gafata
+                Calibri
             </FontFamily>
         </ResourceDictionary>
     </Application.Resources>

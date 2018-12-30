@@ -124,7 +124,6 @@
 
         <ListBox Grid.Row="3"
                  Margin="5"
-                 FontFamily="Consolas"
                  ItemsSource="{Binding Status}" />
     </Grid>
 </Window>
