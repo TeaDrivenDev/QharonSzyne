@@ -59,6 +59,7 @@ module Scanning =
 
     let getV2Comments (tag : TagLib.Id3v2.Tag) =
         tag.OfType<TagLib.Id3v2.CommentsFrame>()
+        |> Seq.filter (fun frame -> not <| String.IsNullOrWhiteSpace frame.Text)
         |> Seq.map (fun frame ->
             {
                 CommentDescriptor = frame.Description
