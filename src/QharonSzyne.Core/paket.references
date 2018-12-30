@@ -2,15 +2,10 @@ FSharp.Core
 
 System.Reactive
 
-NewtonSoft.Json
-
 FSharp.Control.Reactive
 
 NAudio
 TagLib.Portable
-
-SQLite.net-PCL
-System.Data.SQLite.Core
 
 ReactiveProperty
 

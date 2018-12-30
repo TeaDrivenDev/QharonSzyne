@@ -4,13 +4,6 @@
     <TargetFramework>net472</TargetFramework>
   </PropertyGroup>
   <ItemGroup>
-    <Content Include=".gitignore" />
-    <Content Include="x86\SQLite.Interop.dll">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-    <Content Include="x64\SQLite.Interop.dll">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
     <Compile Include="Prelude.fs" />
     <Compile Include="Model.fs" />
     <Compile Include="Database.fs" />
@@ -21,12 +14,6 @@
     <None Include="Scanning.fsx" />
     <None Include="Database.fsx" />
     <None Include="paket.references" />
-  </ItemGroup>
-  <ItemGroup>
-    <SQLiteInteropFiles Remove="x64\SQLite.Interop.dll" />
-  </ItemGroup>
-  <ItemGroup>
-    <SQLiteInteropFiles Remove="x86\SQLite.Interop.dll" />
   </ItemGroup>
   <Import Project="..\..\.paket\Paket.Restore.targets" />
 </Project>

@@ -8,13 +8,13 @@ nuget System.ValueTuple
 
 nuget FSharp.Control.Reactive
 
-nuget NAudio
-nuget NewtonSoft.Json
-nuget SQLite.net-PCL
-nuget System.Data.SQLite.Core
-nuget TagLib.Portable
-nuget MaterialDesignThemes
 nuget ReactiveProperty
+
+nuget MaterialDesignThemes
+
+nuget NAudio
+nuget TagLib.Portable
+
 nuget LiteDB
 nuget LiteDB.FSharp
 
