@@ -1,13 +1,8 @@
 FSharp.Core
-
 System.Reactive
-
 FSharp.Control.Reactive
-
 NAudio
 TagLib.Portable
-
 ReactiveProperty
-
 LiteDB
 LiteDB.FSharp

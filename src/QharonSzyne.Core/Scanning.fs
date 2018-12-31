@@ -127,10 +127,16 @@ module Scanning =
 
             let duration = getDuration (bitrate = 32) fileInfo.FullName
 
+            let artist = string tag.FirstPerformer
+
             {
+                Id = 0
                 Number = byte tag.Track
                 Title = string tag.Title
-                Artist = string tag.FirstPerformer
+                AlbumArtist =
+                    Option.ofObj tag.FirstAlbumArtist
+                    |> Option.defaultValue artist
+                Artist = artist
                 Album = string tag.Album
                 Genres = List.ofArray tag.Genres
                 Year = Some tag.Year

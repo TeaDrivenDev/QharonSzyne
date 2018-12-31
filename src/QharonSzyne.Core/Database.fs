@@ -6,6 +6,9 @@ module Database =
     open System
     open System.IO
 
+    let newtonSoftJsonDummyReference =
+        Newtonsoft.Json.ConstructorHandling.AllowNonPublicDefaultConstructor
+
     [<Literal>]
     let TracksDatabaseFileName = "tracks.db"
 
@@ -23,63 +26,14 @@ module Database =
         open LiteDB
         open LiteDB.FSharp
 
+        open Model
+
         [<CLIMutable>]
         type Metadata =
             {
                 Id : int
                 Name : string
                 Value : string
-            }
-
-        [<CLIMutable>]
-        type Track =
-            {
-                Id : int
-                Number : byte
-                Title : string
-                Artist : string
-                Album : string
-                Year : int
-                Genres : ResizeArray<string>
-                Comments : ResizeArray<Model.Comment>
-                Duration : TimeSpan
-                FilePath : string
-                FileSize : int64
-                AddedOn : DateTime
-                ModifiedOn : DateTime
-            }
-
-        let toDatabaseTrack (track : Model.Track) =
-            {
-                Id = 0
-                Number = track.Number
-                Title = track.Title
-                Artist = track.Artist
-                Album = track.Album
-                Year = track.Year |> Option.defaultValue 0u |> int
-                Genres = track.Genres |> ResizeArray
-                Comments = track.Comments |> ResizeArray
-                Duration = track.Duration
-                FilePath = track.FilePath
-                FileSize = track.FileSize
-                AddedOn = track.AddedOn
-                ModifiedOn = track.ModifiedOn
-            }
-
-        let fromDatabaseTrack track : Model.Track =
-            {
-                Number = track.Number
-                Title = track.Title
-                Artist = track.Artist
-                Album = track.Album
-                Year = track.Year |> uint32 |> Some
-                Genres = track.Genres |> Seq.toList
-                Comments = track.Comments |> Seq.toList
-                Duration = track.Duration
-                FilePath = track.FilePath
-                FileSize = track.FileSize
-                AddedOn = track.AddedOn
-                ModifiedOn = track.ModifiedOn
             }
 
         let createConnection connectionMode databaseFilePath =
@@ -131,7 +85,6 @@ module Database =
                         let tracksCollection = connection.GetCollection<Track>()
 
                         tracks
-                        |> List.map toDatabaseTrack
                         |> tracksCollection.InsertBulk
                         |> ignore
 
@@ -159,5 +112,4 @@ module Database =
                         use connection = connection
 
                         connection.GetCollection<Track>().FindAll()
-                        |> Seq.map fromDatabaseTrack
                         |> Seq.toList)

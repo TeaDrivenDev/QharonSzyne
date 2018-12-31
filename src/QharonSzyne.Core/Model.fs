@@ -4,10 +4,13 @@ module Model =
 
     open System
 
+    [<CLIMutable>]
     type Track =
         {
+            Id : int
             Number : byte
             Title : string
+            AlbumArtist : string
             Artist : string
             Album : string
             Year : uint32 option
