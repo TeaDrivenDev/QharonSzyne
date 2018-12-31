@@ -21,7 +21,7 @@ module Scanning =
 
     type ControlMessage =
     | ScannedFileName of Message<FileName>
-    | ReadTrack of Message<Track>
+    | ReadTrack of Message<MediaFile>
     | ScanningError of ScanningError
 
     let createControlActor reportTotal reportProgress outputTracks =

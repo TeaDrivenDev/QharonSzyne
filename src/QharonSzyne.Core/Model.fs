@@ -5,7 +5,15 @@ module Model =
     open System
 
     [<CLIMutable>]
-    type Track =
+    type Metadata =
+        {
+            Id : int
+            Name : string
+            Value : string
+        }
+
+    [<CLIMutable>]
+    type MediaFile =
         {
             Id : int
             Number : byte

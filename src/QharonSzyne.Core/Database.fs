@@ -18,23 +18,15 @@ module Database =
     type ConnectionMode = OpenExisting | ReplaceOrCreateIfMissing
 
     type ITracksDatabase =
-        abstract member Create : libraryName:string * tracks:Model.Track list -> unit
+        abstract member Create : libraryName:string * tracks:Model.MediaFile list -> unit
 
-        abstract member Read : libraryName:string -> Model.Track list option
+        abstract member Read : libraryName:string -> Model.MediaFile list option
 
     module LiteDB =
         open LiteDB
         open LiteDB.FSharp
 
         open Model
-
-        [<CLIMutable>]
-        type Metadata =
-            {
-                Id : int
-                Name : string
-                Value : string
-            }
 
         let createConnection connectionMode databaseFilePath =
             let exists = File.Exists databaseFilePath
@@ -68,21 +60,21 @@ module Database =
                     |> metadata.InsertBulk
                     |> ignore
 
-                    connection.GetCollection<Track>() |> ignore
+                    connection.GetCollection<MediaFile>() |> ignore
 
                     connection, databaseFilePath
                 | None -> failwith "Could not create tracks database"
 
         type LiteDbTracksDatabase(applicationDataPath : string) =
             interface ITracksDatabase with
-                member __.Create(libraryName : string, tracks : Model.Track list): unit =
+                member __.Create(libraryName : string, tracks : Model.MediaFile list): unit =
                     let libraryPath = Path.Combine(applicationDataPath, libraryName)
 
                     let newTracksDatabasePath =
                         let (connection, newTracksDatabasePath) = createTracksDatabase libraryPath
                         use connection = connection
 
-                        let tracksCollection = connection.GetCollection<Track>()
+                        let tracksCollection = connection.GetCollection<MediaFile>()
 
                         tracks
                         |> tracksCollection.InsertBulk
@@ -111,5 +103,5 @@ module Database =
                     |> Option.map (fun (connection, _) ->
                         use connection = connection
 
-                        connection.GetCollection<Track>().FindAll()
+                        connection.GetCollection<MediaFile>().FindAll()
                         |> Seq.toList)
