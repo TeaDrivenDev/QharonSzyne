@@ -122,8 +122,33 @@
                                       StringFormat=Remaining Time: {0:hh\\:mm\\:ss}}" />
         </Grid>
 
-        <ListBox Grid.Row="3"
-                 Margin="5"
-                 ItemsSource="{Binding Status}" />
+        <Grid Grid.Row="3">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition />
+                <ColumnDefinition />
+            </Grid.ColumnDefinitions>
+
+            <ListBox Grid.Column="0"
+                     Margin="5"
+                     ItemsSource="{Binding Status}" />
+
+            <TreeView Grid.Column="1"
+                      Margin="5"
+                      ItemsSource="{Binding Library}">
+                <TreeView.Resources>
+                    <DataTemplate x:Key="ArtistTemplate">
+                        <StackPanel>
+                            <TextBlock Text="{Binding Name}" />
+                            <TextBlock Text="{Binding Genres,
+                                                      Converter={x:Static uiUtilities:StringConcatenationConverter.Instance},
+                                                      ConverterParameter=', '}" />
+                        </StackPanel>
+                    </DataTemplate>
+                </TreeView.Resources>
+                <TreeView.ItemTemplateSelector>
+                    <uiUtilities:ScanResultTreeViewTemplateSelector ArtistTemplate="{StaticResource ArtistTemplate}" />
+                </TreeView.ItemTemplateSelector>
+            </TreeView>
+        </Grid>
     </Grid>
 </Window>

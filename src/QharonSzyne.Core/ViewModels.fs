@@ -83,6 +83,8 @@ type ScannerViewModel(tracksDatabase : Database.ITracksDatabase) =
 
     let mutable scanStartTime = DateTime.Now
 
+    let library = ObservableCollection()
+
     let scanCommand =
         new ReactiveCommand<_>()
         |> withSubscribeAndDispose
@@ -118,6 +120,10 @@ type ScannerViewModel(tracksDatabase : Database.ITracksDatabase) =
                         statusSubject.OnNext Storing
 
                         tracksDatabase.Create("Default", tracks)
+
+                        Classification.things tracks
+                        |> List.iter (fun x ->
+                            Application.Current.Dispatcher.Invoke(fun _ -> library.Add x))
 
                         statusSubject.OnNext (Done tracks.Length))
                     sourceDirectory.Value)
@@ -188,6 +194,8 @@ type ScannerViewModel(tracksDatabase : Database.ITracksDatabase) =
     member __.UpdateExistingDatabase = updateExistingDatabase
 
     member __.TimeRemaining = timeRemaining
+
+    member __.Library = library
 
     interface IDisposable with
         member this.Dispose(): unit =

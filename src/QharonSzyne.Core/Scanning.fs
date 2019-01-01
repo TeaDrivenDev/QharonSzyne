@@ -105,7 +105,7 @@ module Scanning =
         else
             getDurationMediaFoundation filePath
 
-    let readTrack (fileInfo : FileInfo) relativePath =
+    let readTrack (fileInfo : FileInfo) relativePath : Result<MediaFile, ScanningError> =
         try
             let tag, comments, bitrate =
                 use stream = new FileStream(fileInfo.FullName, FileMode.Open)
@@ -130,7 +130,7 @@ module Scanning =
             let artist = string tag.FirstPerformer
 
             {
-                Id = 0
+                MediaFile.Id = 0
                 Number = byte tag.Track
                 Title = string tag.Title
                 AlbumArtist =
@@ -139,7 +139,7 @@ module Scanning =
                 Artist = artist
                 Album = string tag.Album
                 Genres = List.ofArray tag.Genres
-                Year = Some tag.Year
+                Year = tag.Year
                 Comments = comments
                 Duration = duration
                 FilePath = relativePath
@@ -159,15 +159,16 @@ module Scanning =
                 then basePath + "\\"
                 else basePath
 
-            let baseUri = Uri(basePath)
-            let fullUri = Uri(fullPath)
+            let baseUri = Uri basePath
+            let fullUri = Uri fullPath
 
             let relativeUri = baseUri.MakeRelativeUri fullUri
 
             // Uri's use forward slashes so convert back to backward slashes
-            Uri.UnescapeDataString(relativeUri.ToString().Replace("/", "\\"))
+            relativeUri.ToString().Replace("/", "\\")
+            |> Uri.UnescapeDataString
 
-    let createReadFileActor reportError storeTrack signalScanningComplete getExistingTrack =
+    let createReadFileActor reportError storeTrack signalScanningComplete (getExistingTrack : string -> MediaFile option) =
         let actor =
             MailboxProcessor.Start(fun inbox ->
                 let rec loop() =
@@ -232,7 +233,7 @@ module Scanning =
     let scan getExistingTrack reportError reportTotal reportProgress outputTracks directory =
         let control = createControlActor reportTotal reportProgress outputTracks
 
-        let storeTrack track = track |> Content |> ReadTrack |> control.Post
+        let storeTrack (track : MediaFile) = track |> Content |> ReadTrack |> control.Post
         let scanningCompleted () = EndOfInput |> ReadTrack |> control.Post
 
         let reportError error =

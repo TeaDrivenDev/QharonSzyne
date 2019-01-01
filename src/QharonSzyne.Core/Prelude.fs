@@ -102,3 +102,8 @@ module Prelude =
     //    interface IDisposable with
     //        member this.Dispose(): unit =
     //            compositeDisposable.Dispose()
+
+    module String =
+        let trim (input : string) = input.Trim()
+
+        let split separator (input : string) = input.Split separator

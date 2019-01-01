@@ -12,6 +12,12 @@ module Model =
             Value : string
         }
 
+    type Comment =
+        {
+            CommentDescriptor : string
+            Content : string
+        }
+
     [<CLIMutable>]
     type MediaFile =
         {
@@ -21,7 +27,7 @@ module Model =
             AlbumArtist : string
             Artist : string
             Album : string
-            Year : uint32 option
+            Year : uint32
             Genres : string list
             Comments : Comment list
             Duration : TimeSpan
@@ -31,8 +37,61 @@ module Model =
             ModifiedOn : DateTime
         }
 
-    and Comment =
+    [<CLIMutable>]
+    type Track =
         {
-            CommentDescriptor : string
-            Content : string
+            Id : int
+            Number : byte
+            Title : string
+            AlbumArtist : string
+            Artist : string
+            Album : string
+            Year : uint32
+            Comments : Comment list
+            Duration : TimeSpan
+            FilePath : string
+            FileSize : int64
+            AddedOn : DateTime
+            ModifiedOn : DateTime
+            MediaFile : MediaFile
+        }
+
+    [<CLIMutable>]
+    type Artist =
+        {
+            Id : int
+            Name : string
+            Location : string
+            Releases : Release list
+            Genres : string list
+        }
+
+    and ReleaseType =
+        | Album
+        | EP
+        | Single
+        | Demo
+        | Live
+        | Compilation
+        | Custom of name:string
+
+    and [<CLIMutable>]
+    Release =
+        {
+            Id : int
+            Artist : string
+            Location : string
+            Title : string
+            ReleaseType : ReleaseType
+            Genres : string list
+            Year : uint32
+            Tracks : Track list
+            AddedOn : DateTime
+            //Versions : ReleaseVersion list
+        }
+
+    and [<CLIMutable>]
+    ReleaseVersion =
+        {
+            Name : string
         }

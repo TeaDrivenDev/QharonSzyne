@@ -8,6 +8,7 @@
     <Compile Include="Model.fs" />
     <Compile Include="Database.fs" />
     <Compile Include="Scanning.fs" />
+    <Compile Include="Classification.fs" />
     <Compile Include="Infrastructure.fs" />
     <Compile Include="ViewModels.fs" />
     <Compile Include="UIUtilities.fs" />
