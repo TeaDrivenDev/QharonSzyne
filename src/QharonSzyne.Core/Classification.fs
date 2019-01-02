@@ -60,8 +60,9 @@ module Classification =
         | Demo _ -> Demo
         | _ ->
             let count = release.Tracks |> List.length
-            let duration = release.Tracks
-                            |> List.fold (fun acc current -> acc + current.Duration) (TimeSpan.FromSeconds 0.)
+            let duration =
+                (TimeSpan.FromSeconds 0., release.Tracks)
+                ||> List.fold (fun acc current -> acc + current.Duration)
 
             if count <= 7 then
                 if count <= 4 && duration <= TimeSpan.FromMinutes 25. then Single
@@ -71,7 +72,9 @@ module Classification =
     let thingsForArtist (tracks : MediaFile list) =
         let releases =
             tracks
-            |> List.groupBy (fun track -> Path.GetDirectoryName track.FilePath)
+            |> List.groupBy (fun track -> track.Year, track.Album)
+            |> List.map (fun (_, tracks) ->
+                tracks |> List.map (fun track -> track.FilePath) |> lastCommonBaseDirectory, tracks)
             |> List.map (fun (location, tracks) ->
                 let first = List.head tracks
 
@@ -103,7 +106,7 @@ module Classification =
                         let notInAll = namesHere - allNames
 
                         if Set.count allNames > Set.count namesHere
-                            && floatCount notInAll / floatCount namesHere < 0.25
+                            && floatCount notInAll / floatCount namesHere < 0.40
                         then Live, knownTracks
                         else Album, knownTracks @ release.Tracks
                     | other -> other, knownTracks @ release.Tracks
@@ -131,20 +134,22 @@ module Classification =
 
     let things (tracks : MediaFile list) =
         let byArtistName =
-            tracks |> List.groupBy(fun track -> track.Artist)
+            tracks
+            |> List.groupBy(fun track -> track.Artist)
 
-        let byArtistLocation =
-            byArtistName
-            |> List.collect (fun (artist, tracks) ->
-                tracks
-                |> List.groupBy (fun track ->
-                    track.FilePath |> Path.GetDirectoryName |> Path.GetDirectoryName)
-                |> List.map (fun (location, tracks) -> artist, location, tracks))
+        //let byArtistLocation =
+        //    byArtistName
+        //    |> List.collect (fun (artist, tracks) ->
+        //        tracks
+        //        |> List.groupBy (fun track ->
+        //            track.FilePath |> Path.GetDirectoryName |> Path.GetDirectoryName)
+        //        |> List.map (fun (location, tracks) -> artist, location, tracks))
 
-        byArtistLocation
-        |> List.map (fun (artist, _, tracks) ->
+        byArtistName
+        |> List.map (fun (artist, tracks) ->
             {
                 Name = artist
                 Genres = tracks |> List.collect (fun track -> track.Genres) |> List.distinct
                 Releases = thingsForArtist tracks
             })
+        |> List.sortBy (fun artist -> artist.Name)

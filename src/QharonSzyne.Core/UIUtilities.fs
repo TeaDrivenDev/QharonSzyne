@@ -41,7 +41,7 @@ type StringConcatenationConverter() =
     interface IValueConverter with
         member this.Convert(value: obj, targetType: System.Type, parameter: obj, culture: System.Globalization.CultureInfo): obj =
             match value, string parameter with
-            | (:? (_ seq) as values), separator -> String.concat separator (values |> Seq.map string)
+            | (:? (obj seq) as values), separator -> String.concat separator (values |> Seq.map string)
             | _ -> ""
             :> obj
 
