@@ -7,7 +7,8 @@
         xmlns:uiUtilities="clr-namespace:QharonSzyne.Core.UIUtilities;assembly=QharonSzyne.Core"
         xmlns:viewModels="clr-namespace:QharonSzyne.Core.ViewModels;assembly=QharonSzyne.Core"
         Title="QharonSzÿne Scanner"
-        d:DataContext="{d:DesignInstance Type=viewModels:ScannerViewModel}"
+        d:DataContext="{d:DesignInstance {x:Type viewModels:ScannerViewModel},
+                                         IsDesignTimeCreatable=True}"
         d:DesignHeight="450"
         d:DesignWidth="800"
         Background="{StaticResource MaterialDesignPaper}"
