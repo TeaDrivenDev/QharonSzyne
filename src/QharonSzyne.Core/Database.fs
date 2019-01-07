@@ -52,12 +52,13 @@ module Database =
                 | Some (connection, databaseFilePath) ->
                     let metadata = connection.GetCollection<Metadata>()
 
-                    [
-                        { Id = 0; Name = "Version"; Value = "1.0" }
-                        { Id = 0; Name = "CreatedOn"; Value = DateTime.UtcNow.ToString "s" }
-                        { Id = 0; Name = "Complete"; Value = false.ToString() }
-                    ]
-                    |> metadata.InsertBulk
+                    {
+                        Id = 0
+                        Version = 1
+                        CreatedOn = DateTime.Now
+                        Complete = false
+                    }
+                    |> metadata.Insert
                     |> ignore
 
                     connection.GetCollection<MediaFile>() |> ignore
@@ -82,9 +83,11 @@ module Database =
 
                         let metadata = connection.GetCollection<Metadata>()
 
-                        let complete = metadata.FindOne(fun m -> m.Name = "Complete")
-                        let isDone = { complete with Value = true.ToString() }
-                        metadata.Update isDone |> ignore
+                        let metadataValue = metadata.FindOne(fun _ -> true)
+
+                        { metadataValue with Complete = true }
+                        |> metadata.Update
+                        |> ignore
 
                         newTracksDatabasePath
 

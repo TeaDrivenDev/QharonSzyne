@@ -230,6 +230,7 @@ module Scanning =
 
     // TODO: Make cancelable
     // TODO: Report recoverable errors
+    // TODO: Report incomplete tags
     let scan getExistingTrack reportError reportTotal reportProgress outputTracks directory =
         let control = createControlActor reportTotal reportProgress outputTracks
 

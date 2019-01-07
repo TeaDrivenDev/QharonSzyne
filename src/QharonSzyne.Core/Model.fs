@@ -8,8 +8,9 @@ module Model =
     type Metadata =
         {
             Id : int
-            Name : string
-            Value : string
+            Version : int
+            CreatedOn : DateTime
+            Complete : bool
         }
 
     type Comment =
