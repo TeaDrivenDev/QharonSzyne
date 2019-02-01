@@ -119,6 +119,7 @@ module Classification =
                     Year = release.Year
                     Genres = []
                     ReleaseType = releaseType
+                    ReleaseTypeStatus = ReleaseTypeStatus.Tentative
                     Tracks = []
                     AddedOn = DateTime.Now
                 } :: (cl knownTracks tail)

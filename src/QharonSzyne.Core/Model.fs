@@ -76,6 +76,8 @@ module Model =
         | Compilation
         | Custom of name:string
 
+    and ReleaseTypeStatus = Tentative = 0 | Confirmed = 1
+
     and [<CLIMutable>]
     Release =
         {
@@ -84,6 +86,7 @@ module Model =
             Location : string
             Title : string
             ReleaseType : ReleaseType
+            ReleaseTypeStatus : ReleaseTypeStatus
             Genres : string list
             Year : uint32
             Tracks : Track list

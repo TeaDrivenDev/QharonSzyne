@@ -3,6 +3,7 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:local="clr-namespace:QharonSzyne.UI.Views"
+        xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:uiUtilities="clr-namespace:QharonSzyne.Core.UIUtilities;assembly=QharonSzyne.Core"
         xmlns:viewModels="clr-namespace:QharonSzyne.Core.ViewModels;assembly=QharonSzyne.Core"
@@ -154,6 +155,25 @@
                                     <TextBlock Foreground="Aqua"
                                                Text="{Binding ReleaseType,
                                                               StringFormat=' - {0}'}" />
+                                    <materialDesign:PackIcon Width="7"
+                                                             Height="7"
+                                                             VerticalAlignment="Top"
+                                                             Foreground="Aqua"
+                                                             Kind="QuestionMarkCircle"
+                                                             Opacity=".6">
+                                        <materialDesign:PackIcon.Style>
+                                            <Style TargetType="materialDesign:PackIcon">
+                                                <Setter Property="Visibility" Value="Collapsed" />
+
+                                                <Style.Triggers>
+                                                    <DataTrigger Binding="{Binding ReleaseTypeStatus}"
+                                                                 Value="Tentative">
+                                                        <Setter Property="Visibility" Value="Visible" />
+                                                    </DataTrigger>
+                                                </Style.Triggers>
+                                            </Style>
+                                        </materialDesign:PackIcon.Style>
+                                    </materialDesign:PackIcon>
                                 </StackPanel>
                             </DataTemplate>
                         </HierarchicalDataTemplate.ItemTemplate>
