@@ -17,7 +17,7 @@ module Program =
                 System.IO.Path.Combine(
                     Core.Infrastructure.Constants.ApplicationDataDirectory,
                     Core.Infrastructure.Constants.LibrariesDirectoryName)
-                |> Core.Database.LiteDB.LiteDbTracksDatabase
+                |> Core.TracksDatabase.LiteDB.LiteDbTracksDatabase
 
             view.DataContext <- new QharonSzyne.Core.ViewModels.ScannerViewModel(tracksDatabase)
             view.Show())

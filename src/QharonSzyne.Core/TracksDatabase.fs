@@ -1,7 +1,7 @@
 ﻿namespace QharonSzyne.Core
 
 [<RequireQualifiedAccess>]
-module Database =
+module TracksDatabase =
 
     open System
     open System.IO

@@ -64,7 +64,7 @@ type Status =
     | Storing
     | Done of filesFound:int
 
-type ScannerViewModel(tracksDatabase : Database.ITracksDatabase) =
+type ScannerViewModel(tracksDatabase : TracksDatabase.ITracksDatabase) =
     inherit PropertyChangedBase()
 
     let compositeDisposable = new CompositeDisposable()
