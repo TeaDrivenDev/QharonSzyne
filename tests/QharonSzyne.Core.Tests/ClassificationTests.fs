@@ -1,4 +1,4 @@
-﻿namespace QharonSzyne.Core.Tests.Classificati
+﻿namespace QharonSzyne.Core.Tests.Classification
 
 open Xunit
 
