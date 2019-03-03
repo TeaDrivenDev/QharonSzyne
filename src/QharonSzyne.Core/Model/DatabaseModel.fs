@@ -1,8 +1,9 @@
 ﻿namespace QharonSzyne.Core
 
-module Model =
-
+module DatabaseModel =
     open System
+
+    open SharedModel
 
     [<CLIMutable>]
     type Metadata =
@@ -11,12 +12,6 @@ module Model =
             Version : int
             CreatedOn : DateTime
             Complete : bool
-        }
-
-    type Comment =
-        {
-            CommentDescriptor : string
-            Content : string
         }
 
     [<CLIMutable>]
@@ -42,6 +37,7 @@ module Model =
     type Track =
         {
             Id : int
+            TrackId : Guid
             Number : byte
             Title : string
             AlbumArtist : string
@@ -54,8 +50,24 @@ module Model =
             FileSize : int64
             AddedOn : DateTime
             ModifiedOn : DateTime
-            MediaFile : MediaFile
         }
+        //with
+        //static member fromMediaFile (mediaFile : MediaFile) =
+        //    {
+        //        Track.Id = 0
+        //        Number = mediaFile.Number
+        //        Title = mediaFile.Title
+        //        AlbumArtist = mediaFile.AlbumArtist
+        //        Artist = mediaFile.Artist
+        //        Album = mediaFile.Album
+        //        Year = mediaFile.Year
+        //        Comments = mediaFile.Comments
+        //        Duration = mediaFile.Duration
+        //        FilePath = mediaFile.FilePath
+        //        FileSize = mediaFile.FileSize
+        //        AddedOn = mediaFile.AddedOn
+        //        ModifiedOn = mediaFile.ModifiedOn
+        //    }
 
     [<CLIMutable>]
     type Artist =
@@ -67,22 +79,12 @@ module Model =
             Genres : string list
         }
 
-    and ReleaseType =
-        | Album
-        | EP
-        | Single
-        | Demo
-        | Live
-        | Compilation
-        | Custom of name:string
-
-    and ReleaseTypeStatus = Tentative = 0 | Confirmed = 1
-
     and [<CLIMutable>]
     Release =
         {
             Id : int
-            Artist : string
+            ArtistId : Guid
+            ReleaseId : Guid
             Location : string
             Title : string
             ReleaseType : ReleaseType

@@ -6,6 +6,8 @@ module TracksDatabase =
     open System
     open System.IO
 
+    open DatabaseModel
+
     let newtonSoftJsonDummyReference =
         Newtonsoft.Json.ConstructorHandling.AllowNonPublicDefaultConstructor
 
@@ -18,15 +20,15 @@ module TracksDatabase =
     type ConnectionMode = OpenExisting | ReplaceOrCreateIfMissing
 
     type ITracksDatabase =
-        abstract member Create : libraryName:string * tracks:Model.MediaFile list -> unit
+        abstract member Create : libraryName:string * tracks:MediaFile list -> unit
 
-        abstract member Read : libraryName:string -> Model.MediaFile list option
+        abstract member Read : libraryName:string -> MediaFile list option
 
     module LiteDB =
         open LiteDB
         open LiteDB.FSharp
 
-        open Model
+        open DomainModel
 
         let createConnection connectionMode databaseFilePath =
             let exists = File.Exists databaseFilePath
@@ -68,7 +70,7 @@ module TracksDatabase =
 
         type LiteDbTracksDatabase(applicationDataPath : string) =
             interface ITracksDatabase with
-                member __.Create(libraryName : string, tracks : Model.MediaFile list): unit =
+                member __.Create(libraryName : string, tracks : MediaFile list): unit =
                     let libraryPath = Path.Combine(applicationDataPath, libraryName)
 
                     let newTracksDatabasePath =

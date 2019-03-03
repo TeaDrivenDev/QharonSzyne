@@ -1,11 +1,33 @@
 ﻿namespace QharonSzyne.Core
 
 module Classification =
+    module ClassificationModel =
+        open DatabaseModel
+        open DomainModel
+
+        type UnclassifiedRelease =
+            {
+                Location : string
+                Artist : string
+                Title : string
+                Year : uint32
+                Tracks : MediaFile list
+            }
+
+        type XArtist =
+            {
+                Name : string
+                Genres : string list
+                Releases : Release list
+            }
 
     open System
     open System.IO
 
-    open Model
+    open ClassificationModel
+    open DomainModel
+    open DatabaseModel
+    open SharedModel
 
     let lastCommonBaseDirectory (paths : string list) =
         let rec findMinimumCommonItems current max (items : _ [] list) =
@@ -35,15 +57,6 @@ module Classification =
 
         findMinimumCommonItems 0 (minimumLength - 1) splitPaths
         |> String.concat (string Path.DirectorySeparatorChar)
-
-    type UnclassifiedRelease =
-        {
-            Location : string
-            Artist : string
-            Title : string
-            Year : uint32
-            Tracks : MediaFile list
-        }
 
     let (|SpecifyingName|_|) part (name : string) =
         let regex = sprintf @"[([]%s[)\]]$" part
@@ -125,13 +138,6 @@ module Classification =
                 } :: (cl knownTracks tail)
 
         cl [] releases
-
-    type XArtist =
-        {
-            Name : string
-            Genres : string list
-            Releases : Release list
-        }
 
     let things (tracks : MediaFile list) =
         let byArtistName =

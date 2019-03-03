@@ -155,18 +155,20 @@
                                     <TextBlock Foreground="Aqua"
                                                Text="{Binding ReleaseType,
                                                               StringFormat=' - {0}'}" />
-                                    <materialDesign:PackIcon Width="7"
-                                                             Height="7"
+                                    <materialDesign:PackIcon Width="8"
+                                                             Height="8"
                                                              VerticalAlignment="Top"
                                                              Foreground="Aqua"
                                                              Kind="QuestionMarkCircle"
-                                                             Opacity=".6">
+                                                             Opacity=".6"
+                                                             ToolTip="Release type unconfirmed">
                                         <materialDesign:PackIcon.Style>
                                             <Style TargetType="materialDesign:PackIcon">
                                                 <Setter Property="Visibility" Value="Collapsed" />
 
                                                 <Style.Triggers>
-                                                    <DataTrigger Binding="{Binding ReleaseTypeStatus}"
+                                                    <DataTrigger Binding="{Binding ReleaseTypeStatus,
+                                                                                   Converter={x:Static uiUtilities:AnyValueToStringConverter.Instance}}"
                                                                  Value="Tentative">
                                                         <Setter Property="Visibility" Value="Visible" />
                                                     </DataTrigger>

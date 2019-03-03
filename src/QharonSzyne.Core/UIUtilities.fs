@@ -48,12 +48,23 @@ type StringConcatenationConverter() =
         member this.ConvertBack(value: obj, targetType: System.Type, parameter: obj, culture: System.Globalization.CultureInfo): obj =
             raise (System.NotImplementedException())
 
+type AnyValueToStringConverter() =
+    static member Instance = AnyValueToStringConverter() :> IValueConverter
+
+    interface IValueConverter with
+        member this.Convert(value: obj, targetType: System.Type, parameter: obj, culture: System.Globalization.CultureInfo): obj =
+            if isNull value then "" else value.ToString()
+            :> obj
+
+        member this.ConvertBack(value: obj, targetType: System.Type, parameter: obj, culture: System.Globalization.CultureInfo): obj =
+            raise (System.NotImplementedException())
+
 type ScanResultTreeViewTemplateSelector() =
     inherit DataTemplateSelector()
 
     override __.SelectTemplate(item : obj, container : DependencyObject) =
         match item with
-        | :? Classification.XArtist -> __.ArtistTemplate
+        | :? Classification.ClassificationModel.XArtist -> __.ArtistTemplate
         | _ -> null
 
     member val ArtistTemplate = Unchecked.defaultof<DataTemplate> with get, set

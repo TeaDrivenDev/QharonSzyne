@@ -7,7 +7,8 @@ module Scanning =
     open System.IO
     open System.Linq
 
-    open Model
+    open SharedModel
+    open DatabaseModel
 
     type Message<'T> =
     | Content of 'T
