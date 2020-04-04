@@ -1,5 +1,5 @@
 source https://api.nuget.org/v3/index.json
-framework: net472, netstandard20
+framework: net48, netstandard20
 
 nuget FSharp.Core
 
@@ -20,7 +20,7 @@ nuget LiteDB.FSharp
 
 group Test
     source https://api.nuget.org/v3/index.json
-    framework: net472
+    framework: net48
 
     nuget xunit
     nuget xunit.runner.console
