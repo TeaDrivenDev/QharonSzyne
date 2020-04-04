@@ -5,8 +5,8 @@
 
 #I @"..\..\packages"
 
-#r @"SQLite.Net-PCL\lib\portable-win8+net45+wp8+wpa81+MonoAndroid1+MonoTouch1\SQLite.Net.dll"
-#r @"SQLite.Net-PCL\lib\net4\SQLite.Net.Platform.Win32.dll"
+#r @"LiteDB\lib\net40\LiteDB.dll"
+#r @"LiteDB.FSharp\lib\net45\LiteDB.FSharp.dll"
 #r @"Newtonsoft.Json\lib\net45\Newtonsoft.Json.dll"
 #r @"System.Reactive\lib\net46\System.Reactive.dll"
 
@@ -15,53 +15,57 @@ open System.IO
 
 #r "System.IO"
 
-#r @"TagLib.Portable\lib\portable-net45+win+wpa81+wp8+MonoAndroid10+xamarinios10+MonoTouch10\TagLib.Portable.dll"
-#r @"NAudio\lib\net35\NAudio.dll"
+open LiteDB
+open LiteDB.FSharp
 
 #load "Prelude.fs"
-#load "Model.fs"
-#load "Scanning.fs"
-#load "Database.fs"
 
-open QharonSzyne
+[<CLIMutable>]
+type Release =
+    {
+        //[<BsonId>]
+        Id : ObjectId
+        //Artist : Artist
+        Title : string
+        Year : uint16
+    }
 
-let interopPathRelative = @"..\..\packages\System.Data.SQLite.Core\build\net46"
-let interopPath = DirectoryInfo(Path.Combine(__SOURCE_DIRECTORY__, interopPathRelative)).FullName
-Environment.SetEnvironmentVariable("Path", Environment.GetEnvironmentVariable("Path") + ";" + interopPath)
+and [<CLIMutable>] Artist =
+    {
+        //[<BsonId>]
+        Id: ObjectId
+        Name : string
+        Releases : Release list
+    }
 
 let applicationDataPath = @"D:\Development\Staging\QharonSzyne"
 
-Database.createTracksDatabase applicationDataPath
+let databaseFileName = "database.db"
 
-let directory = @"E:\Recompress\Progressive Metal\Cynic"
+BsonMapper.Global <- FSharpBsonMapper()
 
-let addToDatabase (createConnection : unit -> SQLite.Net.SQLiteConnection) tracks =
-    use connection = createConnection()
+BsonMapper.Global.Entity<Artist>()
+    .DbRef(fun x -> x.Releases)
 
-    try
-        tracks
-        |> List.map Database.toDatabaseTrack
-        |> (fun tracks -> tracks, true)
-        |> connection.InsertAll
-        |> ignore
-    with
-    | ex -> printfn "%s\n%s" ex.Message ex.StackTrace
+let connection = new LiteDatabase(Path.Combine(applicationDataPath, databaseFileName), BsonMapper.Global)
 
-Scanning.scan
-    (fun _ -> None)
-    (printfn "%i tracks found")
-    ignore
-    (fun tracks ->
-        printfn "Adding %i tracks to database" tracks.Length
-        addToDatabase (fun _ -> Database.createConnection false applicationDataPath) tracks
+let artists = connection.GetCollection<Artist>()
+let releases = connection.GetCollection<Release>()
 
-        use connection = Database.createConnection false applicationDataPath
-        let complete =
-            connection.Table<Database.Metadata>().Where(fun m -> m.Name = "Complete")
-            |> Seq.head
+let reign = { Id = ObjectId.Empty; (*Artist = slayer;*) Title = "Reign In Blood"; Year = 1986us }
+let seasons = { Id = ObjectId.Empty;(* Artist = slayer;*) Title = "Seasons In The Abyss"; Year = 1990us }
+let slayer = { Id = ObjectId.Empty; Name = "Slayer"; Releases = [ reign; seasons ] }
 
-        let isDone = { complete with Value = true.ToString() }
-        connection.Update isDone |> ignore
+releases.Insert [| reign; seasons |]
+artists.Insert slayer
 
-        printfn "Done")
-    directory
+let query =
+    artists.Include(fun x -> x.Releases).FindAll()
+
+query
+|> Seq.iter (fun x ->
+    printfn "%s" x.Name
+
+    x.Releases
+    |> Seq.iter (fun r ->
+        printfn "\t%s" r.Title))

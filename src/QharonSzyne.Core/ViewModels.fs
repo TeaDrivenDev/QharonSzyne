@@ -180,7 +180,7 @@ type ScannerViewModel(tracksDatabase : TracksDatabase.ITracksDatabase) =
             statusSubject
             scannedFilesSubject
         ] : IDisposable list)
-        |> List.iter compositeDisposable.Add
+        |> List.iter (compositeDisposable.Add >> ignore)
 
     member __.SourceDirectory = sourceDirectory
 

@@ -36,3 +36,10 @@ module DomainModel =
             AddedOn : DateTime
             //Versions : ReleaseVersion list
         }
+
+    type Artist =
+        {
+            ArtistId : Guid
+            Name : string
+            Location : string
+        }

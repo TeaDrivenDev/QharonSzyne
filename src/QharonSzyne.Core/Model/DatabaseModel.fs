@@ -3,6 +3,8 @@
 module DatabaseModel =
     open System
 
+    open LiteDB
+
     open SharedModel
 
     [<CLIMutable>]
@@ -72,11 +74,11 @@ module DatabaseModel =
     [<CLIMutable>]
     type Artist =
         {
-            Id : int
+            Id : ObjectId
+            ArtistId : Guid
             Name : string
             Location : string
             Releases : Release list
-            Genres : string list
         }
 
     and [<CLIMutable>]

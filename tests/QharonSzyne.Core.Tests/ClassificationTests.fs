@@ -1,5 +1,8 @@
 ﻿namespace QharonSzyne.Core.Tests.Classification
 
+open System
+open System.IO
+
 open Xunit
 
 module LastCommonBaseDirectoryTests =
@@ -65,3 +68,32 @@ module LastCommonBaseDirectoryTests =
 
         // Assert
         Assert.Equal(expectedResult, result)
+
+    let x selector items =
+        let paths =
+            items
+            |> List.map (selector >> Path.GetDirectoryName)
+            |> List.sort
+
+        let excludedPaths =
+            paths
+            |> List.filter (fun path ->
+                paths |> List.exists (fun p -> p <> path && Uri(path).IsBaseOf(Uri p)))
+            |> set
+
+        items
+        |> List.filter (fun item ->
+            let path = selector item |> Path.GetDirectoryName
+
+            Set.contains path excludedPaths |> not)
+
+    [<Fact>]
+    let test4 () =
+        let a =
+            [
+                @"D:\x\asdf.mp3"
+                @"D:\x\y\asdf.mp3"
+            ]
+            |> x id
+
+        Assert.Equal<string>([ @"D:\x\y\asdf.mp3" ], a)
