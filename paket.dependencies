@@ -15,8 +15,8 @@ nuget MaterialDesignThemes
 nuget NAudio
 nuget TagLib.Portable
 
-nuget LiteDB ~> 4.1
 nuget LiteDB.FSharp
+nuget LiteDB
 
 group Test
     source https://api.nuget.org/v3/index.json
