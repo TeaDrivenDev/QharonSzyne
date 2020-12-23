@@ -10,19 +10,18 @@ module Scanning =
     open Model
 
     type Message<'T> =
-    | Content of 'T
-    | EndOfInput
-    | Reset
+        | Content of 'T
+        | EndOfInput
+        | Reset
 
-    type ScanningError =
-    | CorruptFile of string
+    type ScanningError = CorruptFile of string
 
-    type FileName = FileName of fileName:string * basePath:string
+    type FileName = FileName of fileName: string * basePath: string
 
     type ControlMessage =
-    | ScannedFileName of Message<FileName>
-    | ReadTrack of Message<MediaFile>
-    | ScanningError of ScanningError
+        | ScannedFileName of Message<FileName>
+        | ReadTrack of Message<MediaFile>
+        | ScanningError of ScanningError
 
     let createControlActor reportTotal reportProgress outputTracks =
         MailboxProcessor.Start(fun inbox ->
@@ -71,7 +70,7 @@ module Scanning =
         [
             match tag.Comment with
             | null | "" -> ()
-            | comment -> yield { CommentDescriptor = "ID3V1"; Content = comment }
+            | comment -> { CommentDescriptor = "ID3V1"; Content = comment }
         ]
 
     let getDuration useFallbackMethod (filePath : string) =
@@ -152,7 +151,7 @@ module Scanning =
         | :? TagLib.CorruptFileException as ex -> Error (CorruptFile fileInfo.FullName)
 
     // see https://weblog.west-wind.com/posts/2010/Dec/20/Finding-a-Relative-Path-in-NET
-    let getRelativePath (basePath : string) fullPath =
+    let getRelativePath (basePath: string) fullPath =
             // Require trailing backslash for path
             let basePath =
                 if not <| basePath.EndsWith "\\"
